@@ -1,8 +1,8 @@
 "use strict";
 
-const cron = require("cron").CronJob;
+const CronJob = require("cron").CronJob;
 const config = require("@wcm/module-helper").getConfig();
-const sitemapGenerator = require("./sitemapGenerator");
+const sitemapGenerator = require("../helpers/sitemapGenerator");
 
 const job = new CronJob({
 	cronTime: "*/10 * * * * *",
