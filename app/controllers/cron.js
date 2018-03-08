@@ -5,7 +5,7 @@ const config = require("@wcm/module-helper").getConfig();
 const sitemapGenerator = require("./sitemapGenerator");
 
 const job = new CronJob({
-	cronTime: config.server.modules.cron.cronTime,
+	cronTime: "*/10 * * * * *",
 	onTick: () => {
 		console.log("CRON: GENERATING SITEMAP."); // eslint-disable-line no-console
 		return sitemapGenerator()
