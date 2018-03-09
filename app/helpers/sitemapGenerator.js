@@ -5,6 +5,7 @@ const stream = require("stream");
 const R = require("ramda");
 const Q = require("q");
 const xmlBuilder = require("xmlbuilder");
+const variablesHelper = require("../helpers/variables");
 
 const ContentModel = require(path.join(process.cwd(), "app/models/content"));
 const ViewModel = require(path.join(process.cwd(), "app/models/view"));
@@ -25,11 +26,9 @@ const getLastMod = (content) => R.compose(
     (date) => new Date(date).toISOString(),
     (item) => R.pathOr(null, ["meta", "lastModified"])(item) || R.pathOr(null, ["meta", "created"])(item)
 )(content);
-const generateCustomMap = (location, lastmod, changefreq) => ({
-	location,
-	lastmod,
-	changefreq
-});
+const generateCustomMap = (location, lastmod, changefreq) => {
+	return { location: variablesHelper.get().baseURL + location, lastmod, changefreq };
+};
 const generateContentMap = (content, location) => generateCustomMap(location, getLastMod(content), defaultFreq);
 
 const getContentAndMapIt = (cts, prefix, sufixes) => ContentModel.find(Object.assign(
@@ -96,33 +95,35 @@ const generateMainPagesInfo = () => {
 	)(result));
 };
 
-const generateVisionPages = () => getContentAndMapIt(
-	["58d8d7ffcc4e35a38f275ef1", "58eb5396152216149a7fc15e"],
+const generateVisionPages = (variables) => getContentAndMapIt(
+	[variables.topvisions, variables.visions],
 	"projecten",
 	["over", "tijdlijn", "doe-mee", "documenten"]
 );
 
-const generateProjectPages = () => getContentAndMapIt(
-	["58d8ec8298490acd83bf3348"],
+const generateProjectPages = (variables) => getContentAndMapIt(
+	[variables.projects],
 	"toekomstvisies",
 	["over", "tijdlijn", "doe-mee", "documenten"]
 );
 
-const generateParticipationPages = () => getContentAndMapIt(
-	["58da6a1707bc1351f2dfbb45"],
+const generateParticipationPages = (variables) => getContentAndMapIt(
+	[variables.participate],
 	"doe-mee",
 	null
 );
 
-const generateAboutSections = () => getContentAndMapIt(
-	["591d46ad1ff864234b8e4501"],
+const generateAboutSections = (variables) => getContentAndMapIt(
+	[variables.about],
 	"over-ons",
 	null
 );
 
 const generateXMLSitemap = (sitemapArray) => {
-    const urlSet = xmlBuilder.create("urlSet", { version: "1.0", encoding: "UTF-8" });
-    urlSet.att("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9");
+    const urlSet = xmlBuilder.create("urlset", { version: "1.0", encoding: "UTF-8" });
+	urlSet.att("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9");
+	urlSet.att("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+	urlSet.att("xsi:schemaLocation", "http://www.sitemaps.org/schemas/sitemap/0.9");
 
     sitemapArray.forEach((item) => {
         if (!item || !item.location) {
@@ -146,13 +147,15 @@ const generateXMLSitemap = (sitemapArray) => {
 };
 
 module.exports = () => {
+	const variables = variablesHelper.get().ctIds.variables;
+
 	return Q.allSettled([
         removeOldSiteMap(module.exports.currId),
-		generateMainPagesInfo(),
-		generateVisionPages(),
-		generateProjectPages(),
-		generateParticipationPages(),
-		generateAboutSections()
+		generateMainPagesInfo(variables),
+		generateVisionPages(variables),
+		generateProjectPages(variables),
+		generateParticipationPages(variables),
+		generateAboutSections(variables)
 	]).then((result) => {
 		const sitemapArray = R.compose(
             R.flatten,
