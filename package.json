@@ -36,7 +36,7 @@
         "required": true
       },
       {
-        "Group": "Content type Ids",
+        "group": "Content type Ids",
         "key": "ctIds",
         "variables": [
           {
