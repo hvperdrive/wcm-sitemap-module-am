@@ -81,7 +81,7 @@ const generateMainPagesInfo = () => {
 	const promises = [];
 
 	promises.push(
-		getContentBySlugAndMapIt("home", ["", "home"]),
+		getContentBySlugAndMapIt("home", [""]),
 		getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"]),
 		getContentBySlugAndMapIt("participation-overview", ["doe-mee"]),
 		getContentBySlugAndMapIt("contact", ["over-ons"])
