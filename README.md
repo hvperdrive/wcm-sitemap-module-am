@@ -1,5 +1,11 @@
 # wcm-boilerplate-module
 
+TODO: 
+- README
+- Variables
+- Sitemap ID in mongodb
+- Tests
+
 [Description]
 
 ## Prerequisites

@@ -1,60 +1,112 @@
 {
-    "name": "@wcm/boilerplate",
-    "version": "0.0.1",
-    "description": "Boilerplate module",
-    "main": "app",
-    "scripts": {
-        "test": "NODE_ENV=test APP=test ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha"
-    },
-    "publishConfig": {
-        "@wcm:registry": "https://nexusrepo.antwerpen.be/repository/npm-private"
-    },
-    "keywords": [
-        "Boilerplate",
-        "WCM",
-        "Pelorus",
-        "module",
-        "CMS"
-    ],
-    "wcmModule": {
-        "angularDirPath": "public/app/",
-        "cssDirPath": "public/styles/",
-        "moduleConfig": {
-            "angularModule": "wcm-boilerplate",
-            "translationKey": "Boilerplate",
-            "operationType": "boilerplate",
-            "icon": "ban",
-            "type": "system",
-            "machineName": "boilerplate",
-            "navigationItem": true,
-            "authentication": {
-                "requiresLogin": true
-            }
-        },
-        "variables": []
-    },
-    "author": "Jeroen Valcke",
-    "license": "ISC",
-    "dependencies": {
-        "@wcm/module-helper": "1.0.0",
-        "glob": "^7.1.2",
-        "path": "^0.12.7",
-        "q": "^1.5.1",
-        "ramda": "^0.25.0",
-        "rootpath": "~0.1.2"
-    },
-    "devDependencies": {
-        "@district01/eslint-config": "1.0.0",
-        "apidoc-swagger": "git+https://github.com/JvJefke/apidoc-swagger.git",
-        "chai": "~4.1.2",
-        "gulp": "~3.9.1",
-        "gulp-angular-templatecache": "~2.0.0",
-        "gulp-apidoc": "~0.2.0",
-        "gulp-apidoc-swagger": "~0.2.2",
-        "gulp-replace": "~0.5.4",
-        "istanbul": "^0.4.5",
-        "mocha": "~4.0.1",
-        "run-sequence": "~1.2.2",
-        "sinon": "~4.0.2"
-    }
+  "name": "@wcm/sitemap-module-am",
+  "version": "0.0.4",
+  "description": "Sitemap generator for Antwerpen Morgen",
+  "main": "app",
+  "scripts": {
+    "test": "NODE_ENV=test APP=test ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha"
+  },
+  "publishConfig": {
+    "@wcm:registry": "https://nexusrepo.antwerpen.be/repository/npm-private"
+  },
+  "keywords": [
+    "Antwerpen Morgen",
+    "sitemap",
+    "WCM",
+    "Pelorus",
+    "module",
+    "CMS"
+  ],
+  "wcmModule": {
+    "variables": [
+      {
+        "label": "Base url (trailing slash)",
+        "description": "This URL will prefix all the paths in the sitemap",
+        "key": "baseURL",
+        "value": "https://example.com/",
+        "type": "text",
+        "required": true
+      },
+      {
+        "label": "Cron time",
+        "description": "Cron time string",
+        "key": "cron",
+        "value": "*/10 * * * * *",
+        "type": "text",
+        "required": true
+      },
+      {
+        "group": "Content type Ids",
+        "key": "ctIds",
+        "variables": [
+          {
+            "label": "Projecten CT _id",
+            "description": "",
+            "key": "projects",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "Topvisie CT _id",
+            "description": "",
+            "key": "topvisions",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "Visie CT _id",
+            "description": "",
+            "key": "visions",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "Participation CT _id",
+            "description": "",
+            "key": "particpate",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "About section CT _id",
+            "description": "",
+            "key": "about",
+            "value": "",
+            "type": "text",
+            "required": true
+          }
+        ]
+      }
+    ]
+  },
+  "author": "Jeroen Valcke",
+  "license": "ISC",
+  "dependencies": {
+    "@wcm/module-helper": "1.0.0",
+    "compression": "^1.7.2",
+    "cron": "^1.3.0",
+    "glob": "^7.1.2",
+    "path": "^0.12.7",
+    "q": "^1.5.1",
+    "ramda": "^0.25.0",
+    "xmlbuilder": "^9.0.7"
+  },
+  "devDependencies": {
+    "@district01/eslint-config": "1.0.0",
+    "apidoc-swagger": "git+https://github.com/JvJefke/apidoc-swagger.git",
+    "chai": "~4.1.2",
+    "gulp": "~3.9.1",
+    "gulp-angular-templatecache": "~2.0.0",
+    "gulp-apidoc": "~0.2.0",
+    "gulp-apidoc-swagger": "~0.2.2",
+    "gulp-replace": "~0.5.4",
+    "istanbul": "^0.4.5",
+    "mocha": "~4.0.1",
+    "run-sequence": "~1.2.2",
+    "sinon": "~4.0.2"
+  }
 }

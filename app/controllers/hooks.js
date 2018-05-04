@@ -1,14 +1,17 @@
 "use strict";
 
 const variablesHelper = require("../helpers/variables");
+const cronController = require("./cron");
 
 const onLoadComplete = () => {
 	// Initiate passport strategies
-	variablesHelper.reload();
+	variablesHelper.reload()
+		.then(() => cronController.init());
 };
 const onConfigurationChanged = () => {
 	// Initiate passport strategies
-	variablesHelper.reload();
+	variablesHelper.reload()
+		.then(() => cronController.init());
 };
 
 module.exports.handleHooks = (hooks) => {
