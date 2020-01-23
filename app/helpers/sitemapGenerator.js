@@ -64,10 +64,10 @@ const generateMultilingualContent = (item, prefix, suffix) => {
         const slugByLang = R.pathOr(null, ["meta", "slug", lang])(item);
 
         if (slugByLang) {
-            let baseURL = lang + "/" + prefix + "/" + slugByLang;
+            let baseURL = `${lang}/${prefix}/${slugByLang}`;
 
             if (suffix) {
-                baseURL += "/" + suffix;
+                baseURL += `/${suffix}`;
             }
             return generateContentMap(item, (baseURL));
         }
@@ -106,7 +106,7 @@ const getContentBySlugAndMapIt = (slug, suffixes) => {
             let baseURL = lang;
 
             if (suffix.length) {
-                baseURL += "/" + suffix;
+                baseURL += `/${suffix}`
             }
 
             return generateContentMap(item, (baseURL));
