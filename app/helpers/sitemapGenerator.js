@@ -78,6 +78,10 @@ const generateMultilingualContent = (item, prefix, suffix) => {
     return multilingualContentMap.filter(item => typeof item !== "undefined");
 };
 
+const generateMultilingualCustomContent = (slug, date, changeFreq) => availableLanguages.map(lang => {
+    return generateCustomMap(`${lang}/${slug}`, date, changeFreq);
+});
+
 const getContentAndMapIt = (cts, prefix, suffixes) => getContentByCT(cts)
     .then((result) => result.reduce((acc, item) => {
         if (!Array.isArray(suffixes)) {
@@ -130,8 +134,8 @@ const generateMainPagesInfo = () => {
     );
 
     map.push(
-        generateCustomMap("projecten", new Date().toISOString(), DEFAULT_FREQ),
-        generateCustomMap("in-de-buurt", new Date().toISOString(), DEFAULT_FREQ)
+        ...generateMultilingualCustomContent("projecten", new Date().toISOString(), DEFAULT_FREQ),
+        ...generateMultilingualCustomContent("in-de-buurt", new Date().toISOString(), DEFAULT_FREQ)
     );
 
     return Q.allSettled(promises).then((result) => R.compose(
@@ -141,30 +145,6 @@ const generateMainPagesInfo = () => {
         R.map((item) => item.value)
     )(result));
 };
-
-/* const getSubContentAndMapIt = (items, prefix) => {
-    const uuids = items.map((item) => item.value);
-
-    return getContentByUuids(uuids).then((results) => {
-        return results.map((result) => generateContentMap(result, prefix + "/" + R.path(["meta", "slug", "nl"])(result)), []);
-    });
-}; */
-
-/* const getContentBySlugAndMapIt = (slug, suffixes) => {
-    return availableLanguages.map(lang => {
-        const queryString = `meta.slug.${lang}`;
-
-        return getContentBySlug(queryString, slug).then(item => suffixes.map(suffix => {
-            let baseURL = lang;
-
-            if (suffix.length) {
-                baseURL += "/" + suffix;
-            }
-
-            return generateContentMap(item, (baseURL));
-        }));
-    });
-}; */
 
 const getSubContentAndMapIt = (items, project, prefix, suffix) => {
     const uuids = items.map(item => item.value);
