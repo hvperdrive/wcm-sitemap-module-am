@@ -11,15 +11,15 @@ module.exports.get = () => variables;
 module.exports.getPackageInfo = () => packageInfo;
 
 module.exports.reload = (info) => {
-	packageInfo = info || packageInfo || null;
+    packageInfo = info || packageInfo || null;
 
-	return VariableHelper.getAll(packageInfo.name, packageInfo.version)
-		.then((vars) => {
-			variables = vars;
+    return VariableHelper.getAll(packageInfo.name, packageInfo.version)
+        .then((vars) => {
+            variables = vars;
 
-			return Q.when(variables);
-		},
-		(responseError) => {
-			throw responseError;
-		});
+            return Q.when(variables);
+        },
+        (responseError) => {
+            throw responseError;
+        });
 };

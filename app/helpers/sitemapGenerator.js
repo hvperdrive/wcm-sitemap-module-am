@@ -28,7 +28,8 @@ const DEFAULT_FREQ = "daily";
 const SITEMAP_CACHE_KEY = "sitemapKey";
 const VALID_EXPIRE_TIME = 3 * 24 * 60 * 60; // 3 days
 
-let currCachId = null;
+let AVAILABLEWEBSITES = null;
+let CURRENTWEBSITE = null;
 
 const getLastMod = (content) => R.compose(
     (date) => new Date(date).toISOString(),
@@ -46,6 +47,15 @@ const getContentByCT = (cts) => ContentModel.find(Object.assign(
     defaultContentQuery,
     { "meta.contentType": { $in: cts } }
 ), defaultReturnFields).lean().exec();
+
+const getContentByCTForWebsite = (cts) => {
+    return ContentModel.find(Object.assign(
+        {},
+        defaultContentQuery,
+        { "meta.contentType": { $in: cts } },
+        { [`fields.medium.${CURRENTWEBSITE.name}`]: { $eq: true } }
+    ), defaultReturnFields).lean().exec();
+};
 
 const getContentBySlug = (queryString, slug) => ContentModel.findOne(Object.assign(
     {},
@@ -106,7 +116,7 @@ const getContentBySlugAndMapIt = (slug, suffixes) => {
             let baseURL = lang;
 
             if (suffix.length) {
-                baseURL += `/${suffix}`
+                baseURL += `/${suffix}`;
             }
 
             return generateContentMap(item, (baseURL));
@@ -166,17 +176,24 @@ const generateVisionPages = (variables) => getContentAndMapIt(
     ["over", "tijdlijn", "doe-mee", "media"]
 );
 
-const generateProjectPages = (variables) => getContentByCT([variables.projects])
+const generateProjectPages = (variables) => getContentByCTForWebsite([variables.projects])
     .then((content) => {
+
         const promises = content.map((project) => {
             const uuids = (R.path(["fields", "participation"])(project));
 
             return getSubContentAndMapIt(uuids, project, "projecten", "doe-mee");
         });
 
-        return Q.all(promises);
+        const projectRoutes = content.map(project => {
+            return generateMultilingualContent(project, "projecten", null);
+        });
+
+        return [Q.all(promises), ...projectRoutes];
     })
-    .then((result) => R.flatten(result));
+    .then((result) => {
+        return R.flatten(...result);
+    });
 
 const generateAboutSections = (variables) => getContentAndMapIt(
     [variables.about],
@@ -212,8 +229,11 @@ const generateXMLSitemap = (sitemapArray) => {
     return urlSet.end();
 };
 
-module.exports = () => {
+module.exports = (website, availableWebsites) => {
     const variables = variablesHelper.get().ctIds.variables;
+
+    CURRENTWEBSITE = website;
+    AVAILABLEWEBSITES = availableWebsites;
 
     return Q.allSettled([
         removeOldSiteMap(module.exports.currId),
@@ -242,19 +262,29 @@ module.exports = () => {
         readable.push(generateXMLSitemap(sitemapArray));
         readable.push(null);
 
-        return gridFSHelper.writeStreamToGridFS({ fileName: "sitemap.xml" }, readable)
+        return gridFSHelper.writeStreamToGridFS({ fileName: `${website.name}.sitemap.xml` }, readable)
             .then((item) => {
+
                 const d = Q.defer();
 
                 cacheController.set(SITEMAP_CACHE_KEY, item._id, (err) => err ? d.reject(err) : d.resolve(item._id));
 
+                // TODO: remove prev sitemap
+
                 return d.promise;
             })
-            .then((id) => currCachId = id);
+            .then((id) => {
+                return id;
+            });
     });
 };
 
-module.exports.getSitemapId = () => currCachId;
+module.exports.getSitemapId = (website) => {
+    const current = AVAILABLEWEBSITES.find(item => item.name === website);
+
+    return current.id;
+};
+
 module.exports.refrechSitemapId = () => {
     const d = Q.defer();
 
