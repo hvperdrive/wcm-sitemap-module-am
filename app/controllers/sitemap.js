@@ -1,0 +1,12 @@
+"use strict";
+
+const path = require("path");
+const xmlBuilder = require("xmlbuilder");
+
+const sitemapGenerator = require("../helpers/sitemapGenerator");
+const gridFSHelper = require(path.join(process.cwd(), "app/helpers/gridfs"));
+
+module.exports.stream = (req, res) => {
+	res.set("content-type", "application/xml");
+	gridFSHelper.getStreamById(sitemapGenerator.getSitemapId()).pipe(res);
+}
