@@ -13,217 +13,232 @@ const gridFSHelper = require(path.join(process.cwd(), "app/helpers/gridfs"));
 const cacheController = require(path.join(process.cwd(), "app/controllers/cache"));
 
 const defaultReturnFields = {
-	"meta.lastModified": 1,
-	"meta.created": 1,
-	"meta.slug": 1
+    "meta.lastModified": 1,
+    "meta.created": 1,
+    "meta.slug": 1,
+    "fields.participation": 1
 };
 const defaultContentQuery = {
-	"meta.published": true,
-	"meta.deleted": false,
+    "meta.published": true,
+    "meta.deleted": false
 };
 const DEFAULT_FREQ = "daily";
-const SITEMAP_CACHE_KEY = "sitemapKey";
+const SITEMAP_AM_CACHE_KEY = "sitemapKeyAM";
+const SITEMAP_DGV_CACHE_KEY = "sitemapKeyDGV";
 const VALID_EXPIRE_TIME = 3 * 24 * 60 * 60; // 3 days
 
-let currCachId = null;
+let currCacheId = {
+    dgv: null,
+    am: null
+};
+
+const getSitemapCacheKey = (context) => {
+    return context === "am" ? SITEMAP_AM_CACHE_KEY : SITEMAP_DGV_CACHE_KEY;
+};
 
 const getLastMod = (content) => R.compose(
-	(date) => new Date(date).toISOString(),
-	(item) => R.pathOr(null, ["meta", "lastModified"])(item) || R.pathOr(null, ["meta", "created"])(item)
+    (date) => new Date(date).toISOString(),
+    (item) => R.pathOr(null, ["meta", "lastModified"])(item) || R.pathOr(null, ["meta", "created"])(item)
 )(content);
-const generateCustomMap = (location, lastmod, changefreq) => {
-	return { location: variablesHelper.get().baseURL + location, lastmod, changefreq };
+
+const generateCustomMap = (location, lastmod, changefreq, context) => {
+    let baseUrl = context === "am" ? variablesHelper.get().baseAmURL : variablesHelper.get().baseDgvURL;
+
+    return { location: baseUrl + location, lastmod, changefreq };
 };
-const generateContentMap = (content, location) => generateCustomMap(location, getLastMod(content), DEFAULT_FREQ);
 
-const getContentAndMapIt = (cts, prefix, sufixes) => ContentModel.find(Object.assign(
-	{},
-	defaultContentQuery,
-	{ "meta.contentType": { $in: cts } }
-), defaultReturnFields)
-	.lean()
-	.exec()
-	.then((result) => result.reduce((acc, item) => {
-		if (!Array.isArray(sufixes)) {
-			acc.push(
-				generateContentMap(item, (prefix + "/" + R.pathOr(false, ["meta", "slug", "nl"])(item)))
-			);
+const generateContentMap = (content, location, context) => generateCustomMap(location, getLastMod(content), DEFAULT_FREQ, context);
 
-			return acc;
-		}
+const getContentByCT = (cts, context) => ContentModel.find(Object.assign(
+    {},
+    defaultContentQuery,
+    { "meta.contentType": { $in: cts } },
+    context === "dgv" ? { "fields.medium.dgv-website": true } : {},
+    context === "am" ? { "fields.medium.website": true } : {}
+), defaultReturnFields).lean().exec();
 
-		sufixes.forEach((suf) => acc.push(
-			generateContentMap(item, (prefix + "/" + R.pathOr(false, ["meta", "slug", "nl"])(item) + "/" + suf))
-		));
+const getContentBySlug = (slug) => ContentModel.findOne(Object.assign(
+    {},
+    defaultContentQuery,
+    { "meta.slug": slug }
+), defaultReturnFields).lean().exec();
 
-		return acc;
-	}, []));
+const getContentByUuids = (uuids) => ContentModel.find(Object.assign(
+    {},
+    defaultContentQuery,
+    { uuid: { $in: uuids } }
+), defaultReturnFields).lean().exec();
 
-const getContentBySlugAndMapIt = (slug, paths) => ContentModel.findOne(Object.assign(
-	{},
-	defaultContentQuery,
-	{ "meta.slug": slug }
-), defaultReturnFields)
-	.lean()
-	.exec()
-	.then((result) => paths.map((p) => generateContentMap(result, p)));
+const getContentAndMapIt = (cts, prefix, suffixes, context) => getContentByCT(cts)
+    .then((result) => result.reduce((acc, item) => {
+        if (!Array.isArray(suffixes)) {
+            acc.push(
+                generateContentMap(item, (prefix + "/" + R.pathOr(false, ["meta", "slug", "nl"])(item)), context)
+            );
+
+            return acc;
+        }
+
+        suffixes.forEach((suf) => acc.push(
+            generateContentMap(item, (prefix + "/" + R.pathOr(false, ["meta", "slug", "nl"])(item) + "/" + suf), context)
+        ));
+
+        return acc;
+    }, []));
+
+const getContentBySlugAndMapIt = (slug, paths) => getContentBySlug(slug)
+    .then((result) => paths.map((p) => generateContentMap(result, p)));
 
 const removeOldSiteMap = (id) => {
-	if (!id) {
-		return;
-	}
+    if (!id) {
+        return;
+    }
 
-	return gridFSHelper.remove(id);
-}
-
-const generateMainPagesInfo = () => {
-	const map = [];
-	const promises = [];
-
-	promises.push(
-		getContentBySlugAndMapIt("home", [""]),
-		getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"]),
-		getContentBySlugAndMapIt("participation-overview", ["doe-mee"]),
-		getContentBySlugAndMapIt("contact", ["over-ons"])
-	);
-
-	map.push(
-		generateCustomMap("projecten", new Date().toISOString(), DEFAULT_FREQ),
-		generateCustomMap("in-de-buurt", new Date().toISOString(), DEFAULT_FREQ)
-	);
-
-	return Q.allSettled(promises).then((result) => R.compose(
-		R.concat(map),
-		R.flatten,
-		R.filter((value) => value),
-		R.map((item) => item.value)
-	)(result));
+    return gridFSHelper.remove(id);
 };
 
-const generateVisionPages = (variables) => getContentAndMapIt(
-	[variables.topvisions, variables.visions],
-	"projecten",
-	["over", "tijdlijn", "doe-mee", "documenten"]
+const generateMainPagesInfo = () => {
+    const map = [];
+    const promises = [];
+
+    promises.push(
+        getContentBySlugAndMapIt("home", [""]),
+        getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"]),
+        getContentBySlugAndMapIt("participation-overview", ["doe-mee", "doe-mee/komende", "doe-mee/afgelopen", "doe-mee/media"]),
+        getContentBySlugAndMapIt("contact", ["over-ons"])
+    );
+
+    map.push(
+        generateCustomMap("projecten", new Date().toISOString(), DEFAULT_FREQ),
+        generateCustomMap("in-de-buurt", new Date().toISOString(), DEFAULT_FREQ)
+    );
+
+    return Q.allSettled(promises).then((result) => R.compose(
+        R.concat(map),
+        R.flatten,
+        R.filter((value) => value),
+        R.map((item) => item.value)
+    )(result));
+};
+
+const getSubContentAndMapIt = (items, prefix, filterFn) => {
+    const uuids = items.map((item) => item.value);
+
+    return getContentByUuids(uuids).then((results) => {
+        if (typeof filterFn === "function" && !filterFn(result)) {
+            return Q.when(null);
+        }
+
+        return results.map((result) => generateContentMap(result, prefix + "/" + R.path(["meta", "slug", "nl"])(result)), []);
+    });
+};
+
+const generateVisionPages = (variables, context) => getContentAndMapIt(
+    [variables.topvisions, variables.visions],
+    "projecten",
+    ["over", "tijdlijn", "doe-mee", "media"],
+    context
 );
 
-const generateProjectPages = (variables) => getContentAndMapIt(
-	[variables.projects],
-	"toekomstvisies",
-	["over", "tijdlijn", "doe-mee", "documenten"]
-);
+const generateProjectPages = (variables, context) => getContentByCT([variables.projects], context)
+    .then((content) => {
+        const promises = content.map((project) => {
+            return getSubContentAndMapIt(R.path(["fields", "participation"])(project), `projecten/${R.path(["meta", "slug", "nl"])(project)}/doe-mee`);
+        });
 
-const generateParticipationPages = (variables) => getContentAndMapIt(
-	[variables.participate],
-	"doe-mee",
-	null
-);
+        return Q.all(promises);
+    })
+    .then((result) => R.flatten(result));
 
 const generateAboutSections = (variables) => getContentAndMapIt(
-	[variables.about],
-	"over-ons",
-	null
+    [variables.about],
+    "over-ons",
+    null
 );
 
 const generateXMLSitemap = (sitemapArray) => {
-	const urlSet = xmlBuilder.create("urlset", { version: "1.0", encoding: "UTF-8" });
-	urlSet.att("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9");
-	urlSet.att("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-	urlSet.att("xsi:schemaLocation", "http://www.sitemaps.org/schemas/sitemap/0.9");
+    const urlSet = xmlBuilder.create("urlset", { version: "1.0", encoding: "UTF-8" });
 
-	sitemapArray.forEach((item) => {
-		if (!item || !item.location) {
-			return;
-		}
+    urlSet.att("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9");
+    urlSet.att("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+    urlSet.att("xsi:schemaLocation", "http://www.sitemaps.org/schemas/sitemap/0.9");
 
-		const url = urlSet.ele("url");
+    sitemapArray.forEach((item) => {
+        if (!item || !item.location) {
+            return;
+        }
 
-		url.ele("loc", null, item.location);
+        const url = urlSet.ele("url");
 
-		if (item.lastmod) {
-			url.ele("lastmod", null, item.lastmod);
-		}
+        url.ele("loc", null, item.location);
 
-		if (item.changefreq) {
-			url.ele("changefreq", null, item.changefreq);
-		}
-	});
+        if (item.lastmod) {
+            url.ele("lastmod", null, item.lastmod);
+        }
 
-	return urlSet.end();
-};
-/*
- * Usage
- * var key ==> Unique key for cache
- * var time ==> Time to cache the data (in seconds)
- * mongoCache(key, time).otherwise(function(deferred, cacheKey) {
- *     // Get new data here
- *     if(success) {
- *         deferred.resolve(data);
- *     } else {
- *         deferred.reject('Some nice error message');
- *     }
- * }).then(function(data) {
- *     // Return the success call/callback here
- *     callback(null, data);
- * }).fail(function(err) {
- *     // Return the fail call/callback here
- *     callback(err, null);
- * });
- */
-module.exports = () => {
-	const variables = variablesHelper.get().ctIds.variables;
+        if (item.changefreq) {
+            url.ele("changefreq", null, item.changefreq);
+        }
+    });
 
-	return Q.allSettled([
-		removeOldSiteMap(module.exports.currId),
-		generateMainPagesInfo(variables),
-		generateVisionPages(variables),
-		generateProjectPages(variables),
-		generateParticipationPages(variables),
-		generateAboutSections(variables)
-	]).then((result) => {
-		const sitemapArray = R.compose(
-			R.flatten,
-			R.map((item) => item.value),
-			R.filter((item) => !!item.value)
-		)(result)
-
-		const errors = R.compose(
-			R.map((item) => item.error),
-			R.filter((item) => !!item.error)
-		)(result);
-
-		if (errors.length) {
-			console.log("Errors sitemap: ", errors)
-		}
-
-		const readable = new stream.Readable();
-		readable.push(generateXMLSitemap(sitemapArray));
-		readable.push(null);
-
-		return gridFSHelper.writeStreamToGridFS({ fileName: "sitemap.xml" }, readable)
-			.then((item) => {
-				const d = Q.defer();
-
-				cacheController.set(SITEMAP_CACHE_KEY, item._id, (err) => err ? d.reject(err) : d.resolve(item._id))
-
-				return d.promise;
-			})
-			.then((id) => currCachId = id);
-	})
+    return urlSet.end();
 };
 
-module.exports.getSitemapId = () => currCachId;
-module.exports.refrechSitemapId = () => {
-	const d = Q.defer();
+module.exports = (context) => {
+    const variables = variablesHelper.get().ctIds.variables;
 
-	cacheController.get(SITEMAP_CACHE_KEY, VALID_EXPIRE_TIME, (err, key) => {
-		if (err || !key) {
-			return d.reject(err || "key not found");
-		}
+    return Q.allSettled([
+        removeOldSiteMap(module.exports.currId),
+        generateMainPagesInfo(),
+        generateVisionPages(variables, context),
+        generateProjectPages(variables, context),
+        generateAboutSections(variables)
+    ]).then((result) => {
+        const sitemapArray = R.compose(
+            R.flatten,
+            R.map((item) => item.value),
+            R.filter((item) => !!item.value)
+        )(result);
 
-		currCachId = key;
+        const errors = R.compose(
+            R.map((item) => item.error),
+            R.filter((item) => !!item.error)
+        )(result);
 
-		return d.resolve(key);
-	});
+        if (errors.length) {
+            console.log("Errors sitemap: ", errors);
+        }
 
-	return d.promise;
+        const readable = new stream.Readable();
+
+        readable.push(generateXMLSitemap(sitemapArray));
+        readable.push(null);
+
+        return gridFSHelper.writeStreamToGridFS({ fileName: "sitemap.xml" }, readable)
+            .then((item) => {
+                const d = Q.defer();
+
+                cacheController.set(getSitemapCacheKey(context), item._id, (err) => err ? d.reject(err) : d.resolve(item._id));
+
+                return d.promise;
+            })
+            .then((id) => currCacheId[context] = id);
+    });
+};
+
+module.exports.getSitemapId = (context) => currCacheId[context];
+module.exports.refreshSitemapId = (context) => {
+    const d = Q.defer();
+
+    cacheController.get(getSitemapCacheKey(context), VALID_EXPIRE_TIME, (err, key) => {
+        if (err || !key) {
+            return d.reject(err || "key not found");
+        }
+
+        currCacheId = key;
+
+        return d.resolve(key);
+    });
+
+    return d.promise;
 };
