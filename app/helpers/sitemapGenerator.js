@@ -42,17 +42,21 @@ const getLastMod = (content) => R.compose(
     (item) => R.pathOr(null, ["meta", "lastModified"])(item) || R.pathOr(null, ["meta", "created"])(item)
 )(content);
 
-const generateCustomMap = (location, lastmod, changefreq) => {
-    return { location: variablesHelper.get().baseURL + location, lastmod, changefreq };
+const generateCustomMap = (location, lastmod, changefreq, context) => {
+    let baseUrl = context === "am" ? variablesHelper.get().baseAmURL : variablesHelper.get().baseDgvURL;
+
+    return { location: baseUrl + location, lastmod, changefreq };
 };
 
-const generateContentMap = (content, location) => generateCustomMap(location, getLastMod(content), DEFAULT_FREQ);
+const generateContentMap = (content, location, context) => generateCustomMap(location, getLastMod(content), DEFAULT_FREQ, context);
 
-const getContentByCT = (cts) => ContentModel.find(Object.assign(
-    {},
-    defaultContentQuery,
-    { "meta.contentType": { $in: cts } }
-), defaultReturnFields).lean().exec();
+const getContentByCT = (cts) => {
+    return ContentModel.find(Object.assign(
+        {},
+        defaultContentQuery,
+        { "meta.contentType": { $in: cts } }
+    ), defaultReturnFields).lean().exec();
+};
 
 const getContentByCTForWebsite = (cts, context) => {
 
@@ -60,7 +64,8 @@ const getContentByCTForWebsite = (cts, context) => {
         {},
         defaultContentQuery,
         { "meta.contentType": { $in: cts } },
-        { [`fields.medium.${context}`]: true }
+        context === "dgv" ? { "fields.medium.dgv-website": true } : {},
+        context === "am" ? { "fields.medium.website": true } : {}
     ), defaultReturnFields).lean().exec();
 };
 
@@ -76,7 +81,7 @@ const getContentByUuids = (uuids) => ContentModel.find(Object.assign(
     { uuid: { $in: uuids } }
 ), defaultReturnFields).lean().exec();
 
-const generateMultilingualContent = (item, prefix, suffix) => {
+const generateMultilingualContent = (item, prefix, suffix, context) => {
     const multilingualContentMap = availableLanguages.map(lang => {
         const slugByLang = R.pathOr(null, ["meta", "slug", lang])(item);
 
@@ -86,36 +91,34 @@ const generateMultilingualContent = (item, prefix, suffix) => {
             if (suffix) {
                 baseURL += `/${suffix}`;
             }
-            return generateContentMap(item, (baseURL));
+            return generateContentMap(item, (baseURL), context);
         }
-
-        return;
     });
 
     return multilingualContentMap.filter(item => typeof item !== "undefined");
 };
 
-const generateMultilingualCustomContent = (slug, date, changeFreq) => availableLanguages.map(lang => {
-    return generateCustomMap(`${lang}/${slug}`, date, changeFreq);
+const generateMultilingualCustomContent = (slug, date, changeFreq, context) => availableLanguages.map(lang => {
+    return generateCustomMap(`${lang}/${slug}`, date, changeFreq, context);
 });
 
-const getContentAndMapIt = (cts, prefix, suffixes) => getContentByCT(cts)
+const getContentAndMapIt = (cts, prefix, suffixes, context) => getContentByCT(cts, context)
     .then((result) => result.reduce((acc, item) => {
         if (!Array.isArray(suffixes)) {
             acc.push(
-                ...generateMultilingualContent(item, prefix, null)
+                ...generateMultilingualContent(item, prefix, null, context)
             );
 
             return acc;
         }
 
         suffixes.forEach((suf) => acc.push(
-            ...generateMultilingualContent(item, prefix, suf)
+            ...generateMultilingualContent(item, prefix, suf, context)
         ));
         return acc;
     }, []));
 
-const getContentBySlugAndMapIt = (slug, suffixes) => {
+const getContentBySlugAndMapIt = (slug, suffixes, context) => {
     return availableLanguages.map(lang => {
         const queryString = `meta.slug.${lang}`;
 
@@ -126,33 +129,25 @@ const getContentBySlugAndMapIt = (slug, suffixes) => {
                 baseURL += `/${suffix}`;
             }
 
-            return generateContentMap(item, (baseURL));
+            return generateContentMap(item, baseURL, context);
         }));
     });
 };
 
-const removeOldSiteMap = (id) => {
-    if (!id) {
-        return;
-    }
-
-    return gridFSHelper.remove(id);
-};
-
-const generateMainPagesInfo = () => {
+const generateMainPagesInfo = (context) => {
     const map = [];
     const promises = [];
 
     promises.push(
-        ...getContentBySlugAndMapIt("home", [""]),
-        ...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"]),
-        ...getContentBySlugAndMapIt("participation-overview", ["doe-mee", "doe-mee/komende", "doe-mee/afgelopen", "doe-mee/media"]),
-        ...getContentBySlugAndMapIt("contact", ["over-ons"])
+        ...getContentBySlugAndMapIt("home", [""], context),
+        ...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
+        ...getContentBySlugAndMapIt("participation-overview", ["doe-mee", "doe-mee/komende", "doe-mee/afgelopen", "doe-mee/media"], context),
+        ...getContentBySlugAndMapIt("contact", ["over-ons"], context)
     );
 
     map.push(
-        ...generateMultilingualCustomContent("projecten", new Date().toISOString(), DEFAULT_FREQ),
-        ...generateMultilingualCustomContent("in-de-buurt", new Date().toISOString(), DEFAULT_FREQ)
+        ...generateMultilingualCustomContent("projecten", new Date().toISOString(), DEFAULT_FREQ, context),
+        ...generateMultilingualCustomContent("in-de-buurt", new Date().toISOString(), DEFAULT_FREQ, context)
     );
 
     return Q.allSettled(promises).then((result) => R.compose(
@@ -163,49 +158,69 @@ const generateMainPagesInfo = () => {
     )(result));
 };
 
-const getSubContentAndMapIt = (items, project, prefix, suffix) => {
+const getSubContentAndMapIt = (items, project, prefix, suffix, context) => {
     const uuids = items.map(item => item.value);
 
-    return availableLanguages.map(lang => {
-        return getContentByUuids(uuids).then(item => {
+    return Promise.all(availableLanguages.map((lang) => {
+        return getContentByUuids(uuids).then(items => {
             const slugByLang = R.pathOr(null, ["meta", "slug", lang])(project);
 
             if (slugByLang) {
-                return generateContentMap(item, (`${lang}/${prefix}/${slugByLang}/${suffix}`));
+                return items.map(item => {
+                    const subSlugByLang = R.pathOr(null, ["meta", "slug", lang])(item);
+
+                    if (subSlugByLang) {
+                        return generateContentMap(item, (`${lang}/${prefix}/${slugByLang}/${suffix}/${subSlugByLang}`), context);
+                    }
+                });
             }
         });
-    });
+
+    })).then(result => {
+
+        return result.reduce((acc, items) => {
+            if (Array.isArray(items)) {
+                return acc.concat(items.filter(item => !!item));
+            }
+
+            return acc;
+
+        }, []);
+    }).catch(err => console.log(err));
 };
 
-const generateVisionPages = (variables) => getContentAndMapIt(
+const generateVisionPages = (variables, context) => getContentAndMapIt(
     [variables.topvisions, variables.visions],
-    "projecten",
-    ["over", "tijdlijn", "doe-mee", "media"]
+    "visies",
+    ["over", "tijdlijn", "doe-mee", "media"],
+    context
 );
 
 const generateProjectPages = (variables, context) => getContentByCTForWebsite([variables.projects], context)
     .then((content) => {
-
         const promises = content.map((project) => {
             const uuids = (R.path(["fields", "participation"])(project));
 
-            return getSubContentAndMapIt(uuids, project, "projecten", "doe-mee");
+            return getSubContentAndMapIt(uuids, project, "projecten", "doe-mee", context);
         });
 
-        const projectRoutes = content.map(project => {
-            return generateMultilingualContent(project, "projecten", null);
-        });
+        const projectRoutes = R.flatten(content.map(project => generateMultilingualContent(project, "projecten", null, context)));
 
-        return [Q.all(promises), ...projectRoutes];
-    })
-    .then((result) => {
-        return R.flatten(...result);
+        //console.log(projectRoutes);
+
+        return Q.all(promises.concat(projectRoutes));
+    }).then(result => {
+
+        console.log(R.flatten(result));
+
+        return R.flatten(result);
     });
 
-const generateAboutSections = (variables) => getContentAndMapIt(
+const generateAboutSections = (variables, context) => getContentAndMapIt(
     [variables.about],
     "over-ons",
-    null
+    null,
+    context
 );
 
 const generateXMLSitemap = (sitemapArray) => {
@@ -239,11 +254,13 @@ const generateXMLSitemap = (sitemapArray) => {
 module.exports = (context) => {
     const variables = variablesHelper.get().ctIds.variables;
 
+    //generateProjectPages(variables, context).then(result => console.log(result));
+
     return Q.allSettled([
-        generateMainPagesInfo(variables),
-        generateVisionPages(variables),
+        generateMainPagesInfo(context),
+        generateVisionPages(variables, context),
         generateProjectPages(variables, context),
-        generateAboutSections(variables)
+        generateAboutSections(variables, context)
     ]).then((result) => {
         const sitemapArray = R.compose(
             R.flatten,

@@ -8,7 +8,7 @@ const sitemapController = require("../controllers/sitemap");
 const config = require("@wcm/module-helper").getConfig();
 const compression = require("compression");
 
-const availableWebsites = ["am-website", "dgv-website"];
+const availableWebsites = ["am", "dgv"];
 
 // Building the baseUrl based on the configuration. Every API call needs to be located after the api/ route
 const baseUrl = "/" + config.api.prefix + config.api.version;

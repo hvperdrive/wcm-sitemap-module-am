@@ -97,10 +97,18 @@
   "wcmModule": {
     "variables": [
       {
-        "label": "Base url (trailing slash)",
+        "label": "Base DGV url (trailing slash)",
+        "description": "This URL will prefix all the DGV paths in the sitemap",
+        "key": "baseDgvURL",
+        "value": "https://example.com/dgv/",
+        "type": "text",
+        "required": true
+      },
+      {
+        "label": "Base AM url (trailing slash)",
         "description": "This URL will prefix all the paths in the sitemap",
-        "key": "baseURL",
-        "value": "https://example.com/",
+        "key": "baseAmURL",
+        "value": "https://example.com/am/",
         "type": "text",
         "required": true
       },

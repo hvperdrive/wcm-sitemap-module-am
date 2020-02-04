@@ -7,7 +7,7 @@ const sitemapGenerator = require("../helpers/sitemapGenerator");
 
 let job;
 
-const availableWebsites = ["am-website", "dgv-website"];
+const availableWebsites = ["am", "dgv"];
 
 module.exports.init = () => {
     if (job) {
