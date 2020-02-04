@@ -28,8 +28,14 @@ const DEFAULT_FREQ = "daily";
 const SITEMAP_CACHE_KEY = "sitemapKey";
 const VALID_EXPIRE_TIME = 3 * 24 * 60 * 60; // 3 days
 
-let AVAILABLEWEBSITES = null;
-let CURRENTWEBSITE = null;
+let currCacheId = {
+    dgv: null,
+    am: null
+};
+
+const getSitemapCacheKey = (context) => {
+    return `${SITEMAP_CACHE_KEY}-${context}`;
+};
 
 const getLastMod = (content) => R.compose(
     (date) => new Date(date).toISOString(),
@@ -48,12 +54,13 @@ const getContentByCT = (cts) => ContentModel.find(Object.assign(
     { "meta.contentType": { $in: cts } }
 ), defaultReturnFields).lean().exec();
 
-const getContentByCTForWebsite = (cts) => {
+const getContentByCTForWebsite = (cts, context) => {
+
     return ContentModel.find(Object.assign(
         {},
         defaultContentQuery,
         { "meta.contentType": { $in: cts } },
-        { [`fields.medium.${CURRENTWEBSITE.name}`]: { $eq: true } }
+        { [`fields.medium.${context}`]: true }
     ), defaultReturnFields).lean().exec();
 };
 
@@ -176,7 +183,7 @@ const generateVisionPages = (variables) => getContentAndMapIt(
     ["over", "tijdlijn", "doe-mee", "media"]
 );
 
-const generateProjectPages = (variables) => getContentByCTForWebsite([variables.projects])
+const generateProjectPages = (variables, context) => getContentByCTForWebsite([variables.projects], context)
     .then((content) => {
 
         const promises = content.map((project) => {
@@ -229,17 +236,13 @@ const generateXMLSitemap = (sitemapArray) => {
     return urlSet.end();
 };
 
-module.exports = (website, availableWebsites) => {
+module.exports = (context) => {
     const variables = variablesHelper.get().ctIds.variables;
 
-    CURRENTWEBSITE = website;
-    AVAILABLEWEBSITES = availableWebsites;
-
     return Q.allSettled([
-        removeOldSiteMap(module.exports.currId),
         generateMainPagesInfo(variables),
         generateVisionPages(variables),
-        generateProjectPages(variables),
+        generateProjectPages(variables, context),
         generateAboutSections(variables)
     ]).then((result) => {
         const sitemapArray = R.compose(
@@ -262,38 +265,47 @@ module.exports = (website, availableWebsites) => {
         readable.push(generateXMLSitemap(sitemapArray));
         readable.push(null);
 
-        return gridFSHelper.writeStreamToGridFS({ fileName: `${website.name}.sitemap.xml` }, readable)
+        return gridFSHelper.writeStreamToGridFS({ fileName: `${context}.sitemap.xml` }, readable)
             .then((item) => {
-
                 const d = Q.defer();
 
-                cacheController.set(SITEMAP_CACHE_KEY, item._id, (err) => err ? d.reject(err) : d.resolve(item._id));
-
-                // TODO: remove prev sitemap
+                cacheController.set(getSitemapCacheKey(context), item._id, (err) => err ? d.reject(err) : d.resolve(item._id));
 
                 return d.promise;
             })
             .then((id) => {
+                currCacheId[context] = id;
+
+                // remove old sitemaps
+                gridFSHelper.getMetaData({ "filename": `${context}.sitemap.xml`, "_id": { $not: { $eq: id } } }, (err, sitemaps) => {
+
+                    if (err || sitemaps.length === 0) {
+                        return id;
+                    }
+
+                    sitemaps.forEach(item => {
+                        gridFSHelper.remove(item._id);
+                    });
+                });
+
                 return id;
             });
     });
 };
 
-module.exports.getSitemapId = (website) => {
-    const current = AVAILABLEWEBSITES.find(item => item.name === website);
-
-    return current.id;
+module.exports.getSitemapId = (context) => {
+    return currCacheId[context];
 };
 
-module.exports.refrechSitemapId = () => {
+module.exports.refrechSitemapId = (context) => {
     const d = Q.defer();
 
-    cacheController.get(SITEMAP_CACHE_KEY, VALID_EXPIRE_TIME, (err, key) => {
+    cacheController.get(getSitemapCacheKey(context), VALID_EXPIRE_TIME, (err, key) => {
         if (err || !key) {
             return d.reject(err || "key not found");
         }
 
-        currCachId = key;
+        currCacheId[context] = key;
 
         return d.resolve(key);
     });
