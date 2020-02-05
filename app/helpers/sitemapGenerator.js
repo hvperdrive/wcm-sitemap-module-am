@@ -9,7 +9,7 @@ const ContentModel = require(path.join(process.cwd(), "app/models/content"));
 const gridFSHelper = require(path.join(process.cwd(), "app/helpers/gridfs"));
 const cacheController = require(path.join(process.cwd(), "app/controllers/cache"));
 
-const availableLanguages = ["nl", "en"];
+let availableLanguages = [];
 
 const defaultReturnFields = {
     "meta.lastModified": 1,
@@ -235,6 +235,8 @@ const generateXMLSitemap = (sitemapArray) => {
 
 module.exports = (context) => {
     const variables = variablesHelper.get().ctIds.variables;
+
+    availableLanguages = variablesHelper.get().languages.split(",");
 
     return Q.allSettled([
         generateMainPagesInfo(context),
