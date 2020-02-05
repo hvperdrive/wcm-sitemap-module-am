@@ -1,5 +1,3 @@
-"use strict";
-
 const path = require("path");
 const stream = require("stream");
 const R = require("ramda");
@@ -8,7 +6,6 @@ const xmlBuilder = require("xmlbuilder");
 const variablesHelper = require("../helpers/variables");
 
 const ContentModel = require(path.join(process.cwd(), "app/models/content"));
-const ViewModel = require(path.join(process.cwd(), "app/models/view"));
 const gridFSHelper = require(path.join(process.cwd(), "app/helpers/gridfs"));
 const cacheController = require(path.join(process.cwd(), "app/controllers/cache"));
 

@@ -1,5 +1,3 @@
-"use strict";
-
 const CronJob = require("cron").CronJob;
 const config = require("@wcm/module-helper").getConfig();
 const variablesHelper = require("../helpers/variables");

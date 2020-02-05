@@ -1,5 +1,3 @@
-"use strict";
-
 const setupRoutes = require("./routes");
 const hooksController = require("./controllers/hooks");
 const cron = require("./controllers/cron");

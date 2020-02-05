@@ -1,78 +1,14 @@
 {
-  "_args": [
-    [
-      {
-        "raw": "@wcm/sitemap-module-am@0.1.0",
-        "scope": "@wcm",
-        "escapedName": "@wcm%2fsitemap-module-am",
-        "name": "@wcm/sitemap-module-am",
-        "rawSpec": "0.1.0",
-        "spec": "0.1.0",
-        "type": "version"
-      },
-      "/Users/maartendeweerdt/Documents/StudioHyperdrive/dgv-am/pelorus/pelorus-cms/niv_modules/.npm-install-version-temp0.6319756383663282"
-    ]
-  ],
-  "_from": "@wcm/sitemap-module-am@0.1.0",
-  "_id": "@wcm/sitemap-module-am@0.1.0",
-  "_inCache": true,
-  "_location": "/@wcm/sitemap-module-am",
-  "_nodeVersion": "8.9.4",
-  "_npmUser": {},
-  "_npmVersion": "5.6.0",
-  "_phantomChildren": {},
-  "_requested": {
-    "raw": "@wcm/sitemap-module-am@0.1.0",
-    "scope": "@wcm",
-    "escapedName": "@wcm%2fsitemap-module-am",
-    "name": "@wcm/sitemap-module-am",
-    "rawSpec": "0.1.0",
-    "spec": "0.1.0",
-    "type": "version"
-  },
-  "_requiredBy": [
-    "#USER",
-    "/"
-  ],
-  "_resolved": "https://nexusrepo.antwerpen.be/repository/npm-all/@wcm/sitemap-module-am/-/sitemap-module-am-0.1.0.tgz",
-  "_shasum": "4afac5206044713314581450cf515e23e3df62bf",
-  "_shrinkwrap": null,
-  "_spec": "@wcm/sitemap-module-am@0.1.0",
-  "_where": "/Users/maartendeweerdt/Documents/StudioHyperdrive/dgv-am/pelorus/pelorus-cms/niv_modules/.npm-install-version-temp0.6319756383663282",
-  "author": {
-    "name": "Jeroen Valcke"
-  },
-  "dependencies": {
-    "@wcm/module-helper": "1.0.0",
-    "compression": "^1.7.2",
-    "cron": "^1.3.0",
-    "glob": "^7.1.2",
-    "path": "^0.12.7",
-    "q": "^1.5.1",
-    "ramda": "^0.25.0",
-    "xmlbuilder": "^9.0.7"
-  },
+  "name": "@wcm/sitemap-module-am",
+  "version": "0.1.0",
   "description": "Sitemap generator for Antwerpen Morgen",
-  "devDependencies": {
-    "@district01/eslint-config": "1.0.0",
-    "apidoc-swagger": "git+https://github.com/JvJefke/apidoc-swagger.git",
-    "chai": "~4.1.2",
-    "gulp": "~3.9.1",
-    "gulp-angular-templatecache": "~2.0.0",
-    "gulp-apidoc": "~0.2.0",
-    "gulp-apidoc-swagger": "~0.2.2",
-    "gulp-replace": "~0.5.4",
-    "istanbul": "^0.4.5",
-    "mocha": "~4.0.1",
-    "run-sequence": "~1.2.2",
-    "sinon": "~4.0.2"
+  "main": "app",
+  "scripts": {
+    "test": "NODE_ENV=test APP=test ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha"
   },
-  "dist": {
-    "integrity": "sha512-cWRp3iW3j/3IlwJOdgE6LyZV6tA1BITpic1PMNaPvVbUaifjTL5BB3Y/g26N1yf63PJtSulNTQla1ONuUT4ajw==",
-    "shasum": "4afac5206044713314581450cf515e23e3df62bf",
-    "tarball": "https://nexusrepo.antwerpen.be/repository/npm-all/@wcm/sitemap-module-am/-/sitemap-module-am-0.1.0.tgz"
+  "publishConfig": {
+    "@wcm:registry": "https://nexusrepo.antwerpen.be/repository/npm-private"
   },
-  "gitHead": "04bb16367ce0bb2ee13375f87865700046bb5e57",
   "keywords": [
     "Antwerpen Morgen",
     "sitemap",
@@ -81,19 +17,6 @@
     "module",
     "CMS"
   ],
-  "license": "ISC",
-  "main": "app",
-  "name": "@wcm/sitemap-module-am",
-  "optionalDependencies": {},
-  "publishConfig": {
-    "@wcm:registry": "https://nexusrepo.antwerpen.be/repository/npm-private"
-  },
-  "readme": "# @wcm/sitemap-module-am\n\nThis module automatically generates a sitemap (using cron).\n\n## Prerequisites\n - A running implementation of the Pelorus CMS in multitenancy mode is needed either locally or on a server.\n (see https://github.com/hvperdrive/pelorus-cms and https://github.com/hvperdrive/pelorus-multitenancy)\n - Node needs to be installed on the system.\n (see https://nodejs.org)\n\n## How to install\n1. Publish the latest version to the nexus repo if necessary\n2. Define the module and version in Pelorus multitenancy instance\n3. Add module to the Pelorus CMS tenant/instance in peloruse multitenancy instance\n\n## Usage\n\n### API\n\n[GET] `/sitemap` - Get generated sitemap\n\n## Module development\n\nPlease read the following on how to work with WCM modules before changing anything to this repo.\n\n[Modules manual on Github](https://github.com/hvperdrive/pelorus-cms/blob/develop/readmes/modules.md) <br>\n[Modules manual on Digipolis Bitbucket](https://bitbucket.antwerpen.be/projects/WCM/repos/wcm/browse/readmes/modules.md?at=refs%2Fheads%2Fv3-master)\n",
-  "readmeFilename": "README.md",
-  "scripts": {
-    "test": "NODE_ENV=test APP=test ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha"
-  },
-  "version": "0.1.0",
   "wcmModule": {
     "variables": [
       {
@@ -167,5 +90,31 @@
         ]
       }
     ]
+  },
+  "author": "Jeroen Valcke",
+  "license": "ISC",
+  "dependencies": {
+    "@wcm/module-helper": "1.0.0",
+    "compression": "^1.7.2",
+    "cron": "^1.3.0",
+    "glob": "^7.1.2",
+    "path": "^0.12.7",
+    "q": "^1.5.1",
+    "ramda": "^0.25.0",
+    "xmlbuilder": "^9.0.7"
+  },
+  "devDependencies": {
+    "@district01/eslint-config": "1.0.0",
+    "apidoc-swagger": "git+https://github.com/JvJefke/apidoc-swagger.git",
+    "chai": "~4.1.2",
+    "gulp": "~3.9.1",
+    "gulp-angular-templatecache": "~2.0.0",
+    "gulp-apidoc": "~0.2.0",
+    "gulp-apidoc-swagger": "~0.2.2",
+    "gulp-replace": "~0.5.4",
+    "istanbul": "^0.4.5",
+    "mocha": "~4.0.1",
+    "run-sequence": "~1.2.2",
+    "sinon": "~4.0.2"
   }
 }
