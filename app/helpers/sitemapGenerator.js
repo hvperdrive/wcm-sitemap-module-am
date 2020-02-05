@@ -89,13 +89,18 @@ const generateMultilingualContent = (item, prefix, suffix, context) => {
             let baseURL = `${lang}/${prefix}/${slugByLang}`;
 
             if (suffix) {
-                baseURL += `/${suffix}`;
+                if (Array.isArray(suffix)) {
+                    return R.flatten(suffix.map((suf) => generateContentMap(item, `${baseURL}/${suf}`, context)));
+                } else {
+                    baseURL += `/${suffix}`;
+                }
+
             }
             return generateContentMap(item, (baseURL), context);
         }
     });
 
-    return multilingualContentMap.filter(item => typeof item !== "undefined");
+    return R.flatten(multilingualContentMap.filter(item => typeof item !== "undefined"));
 };
 
 const generateMultilingualCustomContent = (slug, date, changeFreq, context) => availableLanguages.map(lang => {
@@ -104,17 +109,9 @@ const generateMultilingualCustomContent = (slug, date, changeFreq, context) => a
 
 const getContentAndMapIt = (cts, prefix, suffixes, context) => getContentByCT(cts, context)
     .then((result) => result.reduce((acc, item) => {
-        if (!Array.isArray(suffixes)) {
-            acc.push(
-                ...generateMultilingualContent(item, prefix, null, context)
-            );
 
-            return acc;
-        }
+        acc.push(generateMultilingualContent(item, prefix, suffixes, context));
 
-        suffixes.forEach((suf) => acc.push(
-            ...generateMultilingualContent(item, prefix, suf, context)
-        ));
         return acc;
     }, []));
 
@@ -176,17 +173,12 @@ const getSubContentAndMapIt = (items, project, prefix, suffix, context) => {
             }
         });
 
-    })).then(result => {
-
-        return result.reduce((acc, items) => {
-            if (Array.isArray(items)) {
-                return acc.concat(items.filter(item => !!item));
-            }
-
-            return acc;
-
-        }, []);
-    }).catch(err => console.log(err));
+    })).then(result => result.reduce((acc, items) => {
+        if (Array.isArray(items)) {
+            return acc.concat(items.filter(item => !!item));
+        }
+        return acc;
+    }, []));
 };
 
 const generateVisionPages = (variables, context) => getContentAndMapIt(
@@ -204,17 +196,10 @@ const generateProjectPages = (variables, context) => getContentByCTForWebsite([v
             return getSubContentAndMapIt(uuids, project, "projecten", "doe-mee", context);
         });
 
-        const projectRoutes = R.flatten(content.map(project => generateMultilingualContent(project, "projecten", null, context)));
-
-        //console.log(projectRoutes);
+        const projectRoutes = R.flatten(content.map(project => generateMultilingualContent(project, "projecten", ["over", "tijdlijn", "doe-mee", "media"], context)));
 
         return Q.all(promises.concat(projectRoutes));
-    }).then(result => {
-
-        console.log(R.flatten(result));
-
-        return R.flatten(result);
-    });
+    }).then(result => R.flatten(result));
 
 const generateAboutSections = (variables, context) => getContentAndMapIt(
     [variables.about],
@@ -253,8 +238,6 @@ const generateXMLSitemap = (sitemapArray) => {
 
 module.exports = (context) => {
     const variables = variablesHelper.get().ctIds.variables;
-
-    //generateProjectPages(variables, context).then(result => console.log(result));
 
     return Q.allSettled([
         generateMainPagesInfo(context),
