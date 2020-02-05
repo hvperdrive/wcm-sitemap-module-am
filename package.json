@@ -1,6 +1,6 @@
 {
   "name": "@wcm/sitemap-module-am",
-  "version": "0.1.0",
+  "version": "0.2.0-0",
   "description": "Sitemap generator for Antwerpen Morgen",
   "main": "app",
   "scripts": {
@@ -32,6 +32,14 @@
         "description": "This URL will prefix all the paths in the sitemap",
         "key": "baseAmURL",
         "value": "https://example.com/am/",
+        "type": "text",
+        "required": true
+      },
+      {
+        "label": "Supported languages (comma seperated)",
+        "description": "List the languages that needs to be included into the sitemap",
+        "key": "languages",
+        "value": "nl,en",
         "type": "text",
         "required": true
       },
