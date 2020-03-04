@@ -1,13 +1,13 @@
 {
   "name": "@wcm/sitemap-module-am",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Sitemap generator for Antwerpen Morgen",
   "main": "app",
   "scripts": {
     "test": "NODE_ENV=test APP=test ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha"
   },
   "publishConfig": {
-    "@wcm:registry": "https://nexusrepo.antwerpen.be/repository/npm-private"
+    "@wcm:registry": "https://nexusrepo.antwerpen.be/repository/npm-private/"
   },
   "keywords": [
     "Antwerpen Morgen",
