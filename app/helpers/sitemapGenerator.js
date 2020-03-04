@@ -123,7 +123,7 @@ const getSubContentAndMapIt = (items, prefix, filterFn) => {
 
 const generateVisionPages = (variables) => getContentAndMapIt(
 	[variables.topvisions, variables.visions],
-	"projecten",
+	"visies",
 	["over", "tijdlijn", "doe-mee", "media"]
 );
 
