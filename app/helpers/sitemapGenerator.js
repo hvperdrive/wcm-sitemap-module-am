@@ -23,38 +23,26 @@ const defaultContentQuery = {
     "meta.deleted": false
 };
 const DEFAULT_FREQ = "daily";
-const SITEMAP_AM_CACHE_KEY = "sitemapKeyAM";
-const SITEMAP_DGV_CACHE_KEY = "sitemapKeyDGV";
+const SITEMAP_CACHE_KEY = "sitemapKey";
 const VALID_EXPIRE_TIME = 3 * 24 * 60 * 60; // 3 days
 
-let currCacheId = {
-    dgv: null,
-    am: null
-};
-
-const getSitemapCacheKey = (context) => {
-    return context === "am" ? SITEMAP_AM_CACHE_KEY : SITEMAP_DGV_CACHE_KEY;
-};
+let currCachId = null;
 
 const getLastMod = (content) => R.compose(
     (date) => new Date(date).toISOString(),
     (item) => R.pathOr(null, ["meta", "lastModified"])(item) || R.pathOr(null, ["meta", "created"])(item)
 )(content);
 
-const generateCustomMap = (location, lastmod, changefreq, context) => {
-    let baseUrl = context === "am" ? variablesHelper.get().baseAmURL : variablesHelper.get().baseDgvURL;
-
-    return { location: baseUrl + location, lastmod, changefreq };
+const generateCustomMap = (location, lastmod, changefreq) => {
+    return { location: variablesHelper.get().baseURL + location, lastmod, changefreq };
 };
 
-const generateContentMap = (content, location, context) => generateCustomMap(location, getLastMod(content), DEFAULT_FREQ, context);
+const generateContentMap = (content, location) => generateCustomMap(location, getLastMod(content), DEFAULT_FREQ);
 
-const getContentByCT = (cts, context) => ContentModel.find(Object.assign(
+const getContentByCT = (cts) => ContentModel.find(Object.assign(
     {},
     defaultContentQuery,
-    { "meta.contentType": { $in: cts } },
-    context === "dgv" ? { "fields.medium.dgv-website": true } : {},
-    context === "am" ? { "fields.medium.website": true } : {}
+    { "meta.contentType": { $in: cts } }
 ), defaultReturnFields).lean().exec();
 
 const getContentBySlug = (slug) => ContentModel.findOne(Object.assign(
@@ -69,18 +57,18 @@ const getContentByUuids = (uuids) => ContentModel.find(Object.assign(
     { uuid: { $in: uuids } }
 ), defaultReturnFields).lean().exec();
 
-const getContentAndMapIt = (cts, prefix, suffixes, context) => getContentByCT(cts)
+const getContentAndMapIt = (cts, prefix, suffixes) => getContentByCT(cts)
     .then((result) => result.reduce((acc, item) => {
         if (!Array.isArray(suffixes)) {
             acc.push(
-                generateContentMap(item, (prefix + "/" + R.pathOr(false, ["meta", "slug", "nl"])(item)), context)
+                generateContentMap(item, (prefix + "/" + R.pathOr(false, ["meta", "slug", "nl"])(item)))
             );
 
             return acc;
         }
 
         suffixes.forEach((suf) => acc.push(
-            generateContentMap(item, (prefix + "/" + R.pathOr(false, ["meta", "slug", "nl"])(item) + "/" + suf), context)
+            generateContentMap(item, (prefix + "/" + R.pathOr(false, ["meta", "slug", "nl"])(item) + "/" + suf))
         ));
 
         return acc;
@@ -110,7 +98,7 @@ const generateMainPagesInfo = () => {
 
     map.push(
         generateCustomMap("projecten", new Date().toISOString(), DEFAULT_FREQ),
-        generateCustomMap("in-de-buurt", new Date().toISOString(), DEFAULT_FREQ)
+        generateCustomMap("op-kaart", new Date().toISOString(), DEFAULT_FREQ)
     );
 
     return Q.allSettled(promises).then((result) => R.compose(
@@ -121,34 +109,62 @@ const generateMainPagesInfo = () => {
     )(result));
 };
 
-const getSubContentAndMapIt = (items, prefix, filterFn) => {
-    const uuids = items.map((item) => item.value);
+const generateContent = (item, prefix, suffix) => {
+    const slug = R.pathOr(null, ["meta", "slug", "nl"])(item);
 
-    return getContentByUuids(uuids).then((results) => {
-        if (typeof filterFn === "function" && !filterFn(result)) {
-            return Q.when(null);
+    if (slug) {
+        let baseURL = `${prefix}/${slug}`;
+
+        if (suffix) {
+            if (Array.isArray(suffix)) {
+                return R.flatten(suffix.map((suf) => generateContentMap(item, `${baseURL}/${suf}`)));
+            } else {
+                baseURL += `/${suffix}`;
+            }
+
         }
-
-        return results.map((result) => generateContentMap(result, prefix + "/" + R.path(["meta", "slug", "nl"])(result)), []);
-    });
+        return generateContentMap(item, (baseURL));
+    }
 };
 
-const generateVisionPages = (variables, context) => getContentAndMapIt(
+const getSubContentAndMapIt = (items, project, prefix, suffix) => {
+    const uuids = items.map((item) => item.value);
+
+    return getContentByUuids(uuids).then((contentItems) => {
+        const slug = R.pathOr(null, ["meta", "slug", "nl"])(project);
+
+        if (!slug) {
+            return;
+        }
+
+        return contentItems.map(item => {
+            const subSlug = R.pathOr(null, ["meta", "slug", "nl"])(item);
+
+            if (subSlug) {
+                return generateContentMap(item, (`${prefix}/${slug}/${suffix}/${subSlug}`));
+            }
+        });
+    }).then(result => R.flatten(result));
+};
+
+const generateVisionPages = (variables) => getContentAndMapIt(
     [variables.topvisions, variables.visions],
-    "visies",
-    ["over", "tijdlijn", "doe-mee", "media"],
-    context
+    "toekomstvisies",
+    ["over", "tijdlijn", "doe-mee", "media"]
 );
 
-const generateProjectPages = (variables, context) => getContentByCT([variables.projects], context)
+const generateProjectPages = (variables) => getContentByCT([variables.projects])
     .then((content) => {
         const promises = content.map((project) => {
-            return getSubContentAndMapIt(R.path(["fields", "participation"])(project), `projecten/${R.path(["meta", "slug", "nl"])(project)}/doe-mee`);
+            const uuids = (R.path(["fields", "participation"])(project));
+
+            return getSubContentAndMapIt(uuids, project, "projecten", "doe-mee");
         });
 
-        return Q.all(promises);
-    })
-    .then((result) => R.flatten(result));
+        const projectRoutes = R.flatten(content.map(project => generateContent(project, "projecten", ["over", "tijdlijn", "doe-mee", "media"])));
+
+        return Q.all(promises.concat(projectRoutes));
+    });
 
 const generateAboutSections = (variables) => getContentAndMapIt(
     [variables.about],
@@ -184,14 +200,14 @@ const generateXMLSitemap = (sitemapArray) => {
     return urlSet.end();
 };
 
-module.exports = (context) => {
+module.exports = () => {
     const variables = variablesHelper.get().ctIds.variables;
 
     return Q.allSettled([
         removeOldSiteMap(module.exports.currId),
-        generateMainPagesInfo(),
-        generateVisionPages(variables, context),
-        generateProjectPages(variables, context),
+        generateMainPagesInfo(variables),
+        generateVisionPages(variables),
+        generateProjectPages(variables),
         generateAboutSections(variables)
     ]).then((result) => {
         const sitemapArray = R.compose(
@@ -218,24 +234,24 @@ module.exports = (context) => {
             .then((item) => {
                 const d = Q.defer();
 
-                cacheController.set(getSitemapCacheKey(context), item._id, (err) => err ? d.reject(err) : d.resolve(item._id));
+                cacheController.set(SITEMAP_CACHE_KEY, item._id, (err) => err ? d.reject(err) : d.resolve(item._id));
 
                 return d.promise;
             })
-            .then((id) => currCacheId[context] = id);
+            .then((id) => currCachId = id);
     });
 };
 
-module.exports.getSitemapId = (context) => currCacheId[context];
-module.exports.refreshSitemapId = (context) => {
+module.exports.getSitemapId = () => currCachId;
+module.exports.refrechSitemapId = () => {
     const d = Q.defer();
 
-    cacheController.get(getSitemapCacheKey(context), VALID_EXPIRE_TIME, (err, key) => {
+    cacheController.get(SITEMAP_CACHE_KEY, VALID_EXPIRE_TIME, (err, key) => {
         if (err || !key) {
             return d.reject(err || "key not found");
         }
 
-        currCacheId = key;
+        currCachId = key;
 
         return d.resolve(key);
     });
