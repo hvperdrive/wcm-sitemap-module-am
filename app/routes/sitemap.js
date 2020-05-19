@@ -9,5 +9,5 @@ const compression = require("compression");
 const baseUrl = "/" + config.api.prefix + config.api.version + "sitemap";
 
 module.exports = (app) => {
-	app.route(baseUrl).get(compression(), sitemapController.stream);
+	app.route(baseUrl + "/:context").get(compression(), sitemapController.stream);
 }
