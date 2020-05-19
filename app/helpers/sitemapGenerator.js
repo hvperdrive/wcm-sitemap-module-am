@@ -83,7 +83,7 @@ const generateMultilingualContent = (item, prefix, suffix, context) => {
 		const slugByLang = R.pathOr(null, ["meta", "slug", lang])(item);
 
 		if (slugByLang) {
-			let baseURL = `${lang}/${prefix}/${slugByLang}`;
+			let baseURL = `${prefix}/${slugByLang}`;
 
 			if (suffix) {
 				if (Array.isArray(suffix)) {
@@ -101,7 +101,7 @@ const generateMultilingualContent = (item, prefix, suffix, context) => {
 };
 
 const generateMultilingualCustomContent = (slug, date, changeFreq, context) => availableLanguages.map(lang => {
-	return generateCustomMap(`${lang}/${slug}`, date, changeFreq, context);
+	return generateCustomMap(`${slug}`, date, changeFreq, context);
 });
 
 const getContentAndMapIt = (cts, prefix, suffixes, context) => getContentByCT(cts, context)
@@ -117,10 +117,10 @@ const getContentBySlugAndMapIt = (slug, suffixes, context) => {
 		const queryString = `meta.slug.${lang}`;
 
 		return getContentBySlug(queryString, slug).then(item => suffixes.map(suffix => {
-			let baseURL = lang;
+			let baseURL = '';
 
 			if (suffix.length) {
-				baseURL += `/${suffix}`;
+				baseURL += `${suffix}`;
 			}
 
 			return generateContentMap(item, baseURL, context);
@@ -164,7 +164,7 @@ const getSubContentAndMapIt = (items, project, prefix, suffix, context) => {
 					const subSlugByLang = R.pathOr(null, ["meta", "slug", lang])(item);
 
 					if (subSlugByLang) {
-						return generateContentMap(item, (`${lang}/${prefix}/${slugByLang}/${suffix}/${subSlugByLang}`), context);
+						return generateContentMap(item, (`${prefix}/${slugByLang}/${suffix}/${subSlugByLang}`), context);
 					}
 				});
 			}
