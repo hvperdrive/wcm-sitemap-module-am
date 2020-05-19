@@ -141,7 +141,7 @@ const generateMainPagesInfo = (context) => {
 
 	map.push(
 		...generateMultilingualCustomContent("projecten", new Date().toISOString(), DEFAULT_FREQ, context),
-		...generateMultilingualCustomContent("in-de-buurt", new Date().toISOString(), DEFAULT_FREQ, context)
+		...generateMultilingualCustomContent("op-kaart", new Date().toISOString(), DEFAULT_FREQ, context)
 	);
 
 	return Q.allSettled(promises).then((result) => R.compose(
