@@ -271,6 +271,11 @@ module.exports = (context) => {
 				cacheController.set(getSitemapCacheKey(context), item._id, (err) => err ? d.reject(err) : d.resolve(item._id));
 
 				return d.promise;
+			})
+			.then((id) => {
+				currCacheId[context] = id;
+
+				return id;
 			});
 	});
 };
