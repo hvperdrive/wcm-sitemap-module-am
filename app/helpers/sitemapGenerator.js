@@ -271,23 +271,6 @@ module.exports = (context) => {
 				cacheController.set(getSitemapCacheKey(context), item._id, (err) => err ? d.reject(err) : d.resolve(item._id));
 
 				return d.promise;
-			})
-			.then((id) => {
-				currCacheId[context] = id;
-
-				// remove old sitemaps
-				gridFSHelper.getMetaData({ "filename": `${context}.sitemap.xml`, "_id": { $not: { $eq: id } } }, (err, sitemaps) => {
-
-					if (err || sitemaps.length === 0) {
-						return id;
-					}
-
-					sitemaps.forEach(item => {
-						gridFSHelper.remove(item._id);
-					});
-				});
-
-				return id;
 			});
 	});
 };
