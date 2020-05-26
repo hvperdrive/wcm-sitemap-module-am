@@ -102,30 +102,6 @@
             "value": "",
             "type": "text",
             "required": true
-          },
-          {
-            "label": "About DGV section CT _id",
-            "description": "",
-            "key": "aboutdgv",
-            "value": "",
-            "type": "text",
-            "required": true
-          },
-          {
-            "label": "Jobs section CT _id",
-            "description": "",
-            "key": "jobs",
-            "value": "",
-            "type": "text",
-            "required": true
-          },
-          {
-            "label": "Contact section CT _id",
-            "description": "",
-            "key": "contact",
-            "value": "",
-            "type": "text",
-            "required": true
           }
         ]
       }
