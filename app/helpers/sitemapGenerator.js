@@ -158,9 +158,7 @@ const generateMainPagesInfoAM = (context) => {
 		...getContentBySlugAndMapIt("contact", ["over-ons"], context)
 	);
 
-	return Q.allSettled(promises).then((result) => R.compose(
-		R.map((item) => item.value)
-	)(result));
+	return Q.allSettled(promises);
 };
 
 const generateMainPagesInfoDGV = (context) => {
@@ -172,9 +170,7 @@ const generateMainPagesInfoDGV = (context) => {
 		...getContentBySlugAndMapIt("over-ons-dgv", ["over-ons", "over-ons/tijdlijn", "over-ons/toekomstverbond", "over-ons/studies", "over-ons/doe-mee", "over-ons/media"], context )
 	);
 
-	return Q.allSettled(promises).then((result) => R.compose(
-		R.map((item) => item.value)
-	)(result));
+	return Q.allSettled(promises);
 };
 
 const getSubContentAndMapIt = (items, project, prefix, suffix, context) => {
