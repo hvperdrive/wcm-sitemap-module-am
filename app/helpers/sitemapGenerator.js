@@ -136,11 +136,13 @@ const generateMainPagesInfo = (context) => {
 		...getContentBySlugAndMapIt("participation-overview", ["doe-mee", "doe-mee/komende", "doe-mee/afgelopen", "doe-mee/media"], context),
 	);
 
-	context === "am" && promises.push(
-		...getContentBySlugAndMapIt("home", [""], context),
-		...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
-		...getContentBySlugAndMapIt("contact", ["over-ons"], context)
-	)
+	if(context === "am") {
+		promises.push(
+			...getContentBySlugAndMapIt("home", [""], context),
+			...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
+			...getContentBySlugAndMapIt("contact", ["over-ons"], context)
+		)
+	}
 
 	map.push(
 		...generateMultilingualCustomContent("projecten", new Date().toISOString(), DEFAULT_FREQ, context),
