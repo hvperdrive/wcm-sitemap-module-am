@@ -236,13 +236,15 @@ const generateXMLSitemap = (sitemapArray) => {
 module.exports = (context) => {
 	const variables = variablesHelper.get().ctIds.variables;
 
+	console.log("variables", variables);
+
 	availableLanguages = variablesHelper.get().languages.split(",");
 
 	return Q.allSettled([
 		generateMainPagesInfo(context),
-		generateVisionPages(variables, context),
+		context === "am" && generateVisionPages(variables, context),
 		generateProjectPages(variables, context),
-		generateAboutSections(variables, context)
+		context === "am" && generateAboutSections(variables, context),
 	]).then((result) => {
 		const sitemapArray = R.compose(
 			R.flatten,

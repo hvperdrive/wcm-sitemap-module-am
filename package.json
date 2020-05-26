@@ -102,6 +102,7 @@
   "author": "Jeroen Valcke",
   "license": "ISC",
   "dependencies": {
+    "@wcm/lb-task-checker": "^1.0.0",
     "@wcm/module-helper": "1.0.0",
     "compression": "^1.7.2",
     "cron": "^1.3.0",
