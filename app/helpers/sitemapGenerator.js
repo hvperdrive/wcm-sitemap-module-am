@@ -254,26 +254,30 @@ const generateXMLSitemap = (sitemapArray) => {
 	return urlSet.end();
 };
 
-module.exports = (context) => {
-	const variables = variablesHelper.get().ctIds.variables;
-
-	availableLanguages = variablesHelper.get().languages.split(",");
-
-	const dgvContent = [
+const generateDGVContent = (variables, context) => {
+	return [
 		generateMainPagesInfo(context),
 		generateProjectPages(variables, context),
 		generateRingparkenPages(variables, context),
 		generateAboutDGVPages(variables, context),
 	]
+}
 
-	const amContent = [
+const generateAMContent = (variables, context) => {
+	return [
 		generateMainPagesInfo(context),
 		generateProjectPages(variables, context),
 		generateVisionPages(variables, context),
 		generateAboutSections(variables, context),
 	]
+}
 
-	return Q.allSettled(context === "dgv" ? dgvContent : amContent).then((result) => {
+module.exports = (context) => {
+	const variables = variablesHelper.get().ctIds.variables;
+
+	availableLanguages = variablesHelper.get().languages.split(",");
+
+	return Q.allSettled(context === "dgv" ? generateDGVContent(variables, context) : generateAMContent(variables, context)).then((result) => {
 		const sitemapArray = R.compose(
 			R.flatten,
 			R.map((item) => item.value),
