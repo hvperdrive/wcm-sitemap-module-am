@@ -136,12 +136,8 @@ const generateMainPagesInfo = (context) => {
 		...getContentBySlugAndMapIt("home", [""], context),
 		...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
 		...getContentBySlugAndMapIt("participation-overview", ["doe-mee", "doe-mee/komende", "doe-mee/afgelopen", "doe-mee/media"], context),
-	);
-
-	context === "am" && promises.push(
-		...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
 		...getContentBySlugAndMapIt("contact", ["over-ons"], context)
-	)
+	);
 
 	map.push(
 		...generateMultilingualCustomContent("projecten", new Date().toISOString(), DEFAULT_FREQ, context),
@@ -257,10 +253,10 @@ module.exports = (context) => {
 
 	return Q.allSettled([
 		generateMainPagesInfo(context),
-		generateProjectPages(variables, context),
 		context === "am" && generateVisionPages(variables, context),
+		generateProjectPages(variables, context),
 		context === "am" && generateAboutSections(variables, context),
-		context === "dgv" && generateRingparkenPages(variables, context),
+		context === "dgv" && generateRingparkenPages(variables, context)
 	]).then((result) => {
 		const sitemapArray = R.compose(
 			R.flatten,
