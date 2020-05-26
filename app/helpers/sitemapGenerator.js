@@ -188,7 +188,14 @@ const generateVisionPages = (variables, context) => getContentAndMapIt(
 const generateAboutDGVPages = (variables, context) => getContentAndMapIt(
 	[variables.aboutdgv],
 	"over-ons",
-	["over-ons", "tijdlijn", "doe-mee", "media"],
+	["over-ons", "tijdlijn","toekomstverbond", "studies", "doe-mee", "media"],
+	context
+);
+
+const generateJobsPages = (variables, context) => getContentAndMapIt(
+	[variables.jobs],
+	"kansen-voor-jobs",
+	["over", "tijdlijn", "doe-mee", "media"],
 	context
 );
 
@@ -206,7 +213,7 @@ const generateProjectPages = (variables, context) => getContentByCTForWebsite([v
 		return Q.all(promises.concat(projectRoutes));
 	}).then(result => R.flatten(result));
 
-const generateRingparkenPages = (variables, context) => getContentByCTForWebsite([variables.ringparken], context)
+const generateRingparkenPages = (variables, context) => getContentByCT([variables.ringparken])
 	.then((content) => {
 		const promises = content.map((ringpark) => {
 			const uuids = (R.path(["fields", "participation"])(ringpark));
@@ -260,6 +267,7 @@ const generateDGVContent = (variables, context) => {
 		generateProjectPages(variables, context),
 		generateRingparkenPages(variables, context),
 		generateAboutDGVPages(variables, context),
+		generateJobsPages(variables, context),
 	]
 }
 
