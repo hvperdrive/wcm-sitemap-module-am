@@ -199,6 +199,13 @@ const generateJobsPages = (variables, context) => getContentAndMapIt(
 	context
 );
 
+const generateContactPages = (variables, context) => getContentAndMapIt(
+	[variables.contact],
+	"contact-dgv",
+	["veelgestelde-vragen", "contact-formulier", "infopunten"],
+	context
+);
+
 
 const generateProjectPages = (variables, context) => getContentByCTForWebsite([variables.projects], context)
 	.then((content) => {
@@ -268,6 +275,7 @@ const generateDGVContent = (variables, context) => {
 		generateRingparkenPages(variables, context),
 		generateAboutDGVPages(variables, context),
 		generateJobsPages(variables, context),
+		generateContactPages(variables, context),
 	]
 }
 

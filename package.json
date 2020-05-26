@@ -118,6 +118,14 @@
             "value": "",
             "type": "text",
             "required": true
+          },
+          {
+            "label": "Contact section CT _id",
+            "description": "",
+            "key": "contact",
+            "value": "",
+            "type": "text",
+            "required": true
           }
         ]
       }
