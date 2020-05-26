@@ -185,6 +185,14 @@ const generateVisionPages = (variables, context) => getContentAndMapIt(
 	context
 );
 
+const generateAboutDGVPages = (variables, context) => getContentAndMapIt(
+	[variables.aboutdgv],
+	"over-ons",
+	["over-ons", "tijdlijn", "doe-mee", "media"],
+	context
+);
+
+
 const generateProjectPages = (variables, context) => getContentByCTForWebsite([variables.projects], context)
 	.then((content) => {
 		const promises = content.map((project) => {
@@ -256,7 +264,8 @@ module.exports = (context) => {
 		context === "am" && generateVisionPages(variables, context),
 		generateProjectPages(variables, context),
 		context === "am" && generateAboutSections(variables, context),
-		context === "dgv" && generateRingparkenPages(variables, context)
+		context === "dgv" && generateRingparkenPages(variables, context),
+		context === "dgv" && generateAboutDGVPages(variables, context),
 	]).then((result) => {
 		const sitemapArray = R.compose(
 			R.flatten,
