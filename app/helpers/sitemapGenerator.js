@@ -151,7 +151,6 @@ const generateMainPagesInfo = (context) => {
 };
 
 const generateMainPagesInfoAM = (context) => {
-	const map = [];
 	const promises = [];
 
 	promises.push(
@@ -160,7 +159,6 @@ const generateMainPagesInfoAM = (context) => {
 	);
 
 	return Q.allSettled(promises).then((result) => R.compose(
-		R.concat(map),
 		R.flatten,
 		R.filter((value) => value),
 		R.map((item) => item.value)
@@ -168,7 +166,6 @@ const generateMainPagesInfoAM = (context) => {
 };
 
 const generateMainPagesInfoDGV = (context) => {
-	const map = [];
 	const promises = [];
 
 	promises.push(
@@ -178,7 +175,6 @@ const generateMainPagesInfoDGV = (context) => {
 	);
 
 	return Q.allSettled(promises).then((result) => R.compose(
-		R.concat(map),
 		R.flatten,
 		R.filter((value) => value),
 		R.map((item) => item.value)
