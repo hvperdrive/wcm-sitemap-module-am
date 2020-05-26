@@ -110,6 +110,14 @@
             "value": "",
             "type": "text",
             "required": true
+          },
+          {
+            "label": "Jobs section CT _id",
+            "description": "",
+            "key": "jobs",
+            "value": "",
+            "type": "text",
+            "required": true
           }
         ]
       }
