@@ -136,8 +136,12 @@ const generateMainPagesInfo = (context) => {
 		...getContentBySlugAndMapIt("home", [""], context),
 		...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
 		...getContentBySlugAndMapIt("participation-overview", ["doe-mee", "doe-mee/komende", "doe-mee/afgelopen", "doe-mee/media"], context),
-		...getContentBySlugAndMapIt("contact", ["over-ons"], context)
 	);
+
+	context === "am" && promises.push(
+		...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
+		...getContentBySlugAndMapIt("contact", ["over-ons"], context)
+	)
 
 	map.push(
 		...generateMultilingualCustomContent("projecten", new Date().toISOString(), DEFAULT_FREQ, context),
@@ -198,6 +202,19 @@ const generateProjectPages = (variables, context) => getContentByCTForWebsite([v
 		return Q.all(promises.concat(projectRoutes));
 	}).then(result => R.flatten(result));
 
+const generateRingparkenPages = (variables, context) => getContentByCTForWebsite([variables.ringparken], context)
+	.then((content) => {
+		const promises = content.map((ringpark) => {
+			const uuids = (R.path(["fields", "participation"])(ringpark));
+
+			return getSubContentAndMapIt(uuids, ringpark, "projecten", "doe-mee", context);
+		});
+
+		const ringparkRoutes = R.flatten(content.map(ringpark => generateMultilingualContent(ringpark, "projecten", ["over", "tijdlijn", "doe-mee", "media"], context)));
+
+		return Q.all(promises.concat(ringparkRoutes));
+	}).then(result => R.flatten(result));
+
 const generateAboutSections = (variables, context) => getContentAndMapIt(
 	[variables.about],
 	"over-ons",
@@ -236,15 +253,14 @@ const generateXMLSitemap = (sitemapArray) => {
 module.exports = (context) => {
 	const variables = variablesHelper.get().ctIds.variables;
 
-	console.log("variables", variables);
-
 	availableLanguages = variablesHelper.get().languages.split(",");
 
 	return Q.allSettled([
 		generateMainPagesInfo(context),
-		context === "am" && generateVisionPages(variables, context),
 		generateProjectPages(variables, context),
+		context === "am" && generateVisionPages(variables, context),
 		context === "am" && generateAboutSections(variables, context),
+		context === "dgv" && generateRingparkenPages(variables, context),
 	]).then((result) => {
 		const sitemapArray = R.compose(
 			R.flatten,

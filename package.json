@@ -64,6 +64,14 @@
             "required": true
           },
           {
+            "label": "Ringparken CT _id",
+            "description": "",
+            "key": "ringparken",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
             "label": "Topvisie CT _id",
             "description": "",
             "key": "topvisions",
