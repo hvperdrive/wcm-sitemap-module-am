@@ -159,8 +159,6 @@ const generateMainPagesInfoAM = (context) => {
 	);
 
 	return Q.allSettled(promises).then((result) => R.compose(
-		R.flatten,
-		R.filter((value) => value),
 		R.map((item) => item.value)
 	)(result));
 };
@@ -175,8 +173,6 @@ const generateMainPagesInfoDGV = (context) => {
 	);
 
 	return Q.allSettled(promises).then((result) => R.compose(
-		R.flatten,
-		R.filter((value) => value),
 		R.map((item) => item.value)
 	)(result));
 };
