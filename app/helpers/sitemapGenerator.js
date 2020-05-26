@@ -136,17 +136,26 @@ const generateMainPagesInfo = (context) => {
 		...getContentBySlugAndMapIt("participation-overview", ["doe-mee", "doe-mee/komende", "doe-mee/afgelopen", "doe-mee/media"], context),
 	);
 
-	if(context === "am") {
-		promises.push(
-			...getContentBySlugAndMapIt("home", [""], context),
-			...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
-			...getContentBySlugAndMapIt("contact", ["over-ons"], context)
-		)
-	}
-
 	map.push(
 		...generateMultilingualCustomContent("projecten", new Date().toISOString(), DEFAULT_FREQ, context),
 		...generateMultilingualCustomContent("op-kaart", new Date().toISOString(), DEFAULT_FREQ, context)
+	);
+
+	return Q.allSettled(promises).then((result) => R.compose(
+		R.concat(map),
+		R.flatten,
+		R.filter((value) => value),
+		R.map((item) => item.value)
+	)(result));
+};
+
+const generateMainPagesAMInfo = (context) => {
+	const promises = [];
+
+	promises.push(
+		...getContentBySlugAndMapIt("home", [""], context),
+		...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
+		...getContentBySlugAndMapIt("contact", ["over-ons"], context)
 	);
 
 	return Q.allSettled(promises).then((result) => R.compose(
@@ -258,6 +267,7 @@ module.exports = (context) => {
 
 	return Q.allSettled([
 		generateMainPagesInfo(context),
+		context === "am" &&	generateMainPagesAMInfo(context),
 		context === "am" && generateVisionPages(variables, context),
 		generateProjectPages(variables, context),
 		context === "am" && generateAboutSections(variables, context),
