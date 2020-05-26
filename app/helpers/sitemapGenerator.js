@@ -259,14 +259,21 @@ module.exports = (context) => {
 
 	availableLanguages = variablesHelper.get().languages.split(",");
 
-	return Q.allSettled([
+	const dgvContent = [
 		generateMainPagesInfo(context),
-		context === "am" && generateVisionPages(variables, context),
 		generateProjectPages(variables, context),
-		context === "am" && generateAboutSections(variables, context),
-		context === "dgv" && generateRingparkenPages(variables, context),
-		context === "dgv" && generateAboutDGVPages(variables, context),
-	]).then((result) => {
+		generateRingparkenPages(variables, context),
+		generateAboutDGVPages(variables, context),
+	]
+
+	const amContent = [
+		generateMainPagesInfo(context),
+		generateProjectPages(variables, context),
+		generateVisionPages(variables, context),
+		generateAboutSections(variables, context),
+	]
+
+	return Q.allSettled(context === "dgv" ? dgvContent : amContent).then((result) => {
 		const sitemapArray = R.compose(
 			R.flatten,
 			R.map((item) => item.value),
