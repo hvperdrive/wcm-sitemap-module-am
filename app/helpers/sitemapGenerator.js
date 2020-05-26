@@ -317,6 +317,18 @@ module.exports = (context) => {
 			.then((id) => {
 				currCacheId[context] = id;
 
+				// remove old sitemaps
+				gridFSHelper.getMetaData({ "filename": `${context}.sitemap.xml`, "_id": { $not: { $eq: id } } }, (err, sitemaps) => {
+
+					if (err || sitemaps.length === 0) {
+						return id;
+					}
+
+					sitemaps.forEach(item => {
+						gridFSHelper.remove(item._id);
+					});
+				});
+
 				return id;
 			});
 	});
