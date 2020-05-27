@@ -124,10 +124,7 @@ const getContentBySlugAndMapIt = (slug, suffixes, context) => {
 			}
 
 			return generateContentMap(item, baseURL, context);
-		})).catch(err => {
-			console.log("err", err);
-			return null;
-		});
+		}));
 	});
 };
 
@@ -243,6 +240,13 @@ const generateRingparkenPages = (variables, context) => getContentByCT([variable
 		return Q.all(promises.concat(ringparkRoutes));
 	}).then(result => R.flatten(result));
 
+const generateStudiesPages = (variables, context) => getContentByCT([variables.studies])
+	.then((content) => {
+		const studiesRoutes = R.flatten(content.map(studie => generateContentMap(studie, "over-ons/studies", context)));
+
+		return Q.all(studiesRoutes);
+	})
+
 const generateAboutSections = (variables, context) => getContentAndMapIt(
 	[variables.about],
 	"over-ons",
@@ -284,6 +288,7 @@ const generateDGVContent = (variables, context) => {
 		generateMainPagesInfoDGV(context),
 		generateProjectPages(variables, context),
 		generateRingparkenPages(variables, context),
+		generateStudiesPages(variables, context)
 	]
 }
 

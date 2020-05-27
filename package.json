@@ -102,6 +102,14 @@
             "value": "",
             "type": "text",
             "required": true
+          },
+          {
+            "label": "Studies section CT _id",
+            "description": "",
+            "key": "studies",
+            "value": "",
+            "type": "text",
+            "required": true
           }
         ]
       }
