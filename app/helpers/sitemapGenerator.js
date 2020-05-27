@@ -242,7 +242,10 @@ const generateRingparkenPages = (variables, context) => getContentByCT([variable
 
 const generateStudiesPages = (variables, context) => getContentByCT([variables.studies])
 	.then((content) => {
-		const studiesRoutes = R.flatten(content.map(studie => generateContentMap(studie, "over-ons/studies", context)));
+		const studiesRoutes = R.flatten(content.map(studie => {
+			console.log("studie", studie)
+			return generateContentMap(studie, "over-ons/studies", context);
+		}));
 
 		return Q.all(studiesRoutes);
 	})
