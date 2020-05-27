@@ -139,10 +139,10 @@ const generateMainPagesInfo = (context) => {
 		...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
 		...getContentBySlugAndMapIt("contact", ["over-ons"], context),
 
-		...getContentBySlugAndMapIt("contactdgv", ["contact-dgv", "contact-dgv/veelgestelde-vragen", "contact-dgv/contact-formulier", "contact-dgv/infopunten"], context),
+/* 		...getContentBySlugAndMapIt("contactdgv", ["contact-dgv", "contact-dgv/veelgestelde-vragen", "contact-dgv/contact-formulier", "contact-dgv/infopunten"], context),
 		...getContentBySlugAndMapIt("kansen-voor-jobs", ["kansen-voor-jobs", "kansen-voor-jobs/over", "kansen-voor-jobs/tijdlijn", "kansen-voor-jobs/doe-mee", "kansen-voor-jobs/media"], context),
 		...getContentBySlugAndMapIt("over-ons-dgv", ["over-ons", "over-ons/tijdlijn", "over-ons/toekomstverbond", "over-ons/studies", "over-ons/doe-mee", "over-ons/media"], context ),
-
+ */
 	);
 
 	map.push(
