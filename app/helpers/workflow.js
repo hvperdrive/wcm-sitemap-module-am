@@ -3,12 +3,8 @@ const LbTaskChecker = require("@wcm/lb-task-checker");
 const lbTaskCheckerInstance = new LbTaskChecker();
 
 lbTaskCheckerInstance.registerTask({
-    key: "SCHEDULE_PUBLISHING",
+    key: "SITEMAP_RENDER",
     instance: process.pid
 });
 
-const handleScheduledPublishing = () => lbTaskCheckerInstance.reserve("SCHEDULE_PUBLISHING", new Date(new Date().getTime() + 10000), process.pid)
-
-module.exports = Object.assign(main, {
-	handleScheduledPublishing
-});
+module.exports = lbTaskCheckerInstance;

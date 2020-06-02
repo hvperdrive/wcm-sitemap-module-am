@@ -375,7 +375,6 @@ module.exports = (context) => {
 				return d.promise;
 			})
 			.then((id) => {
-				currCacheId[context] = id;
 
 				// remove old sitemaps
 				gridFSHelper.getMetaData({ "filename": `${context}.sitemap.xml`, "_id": { $not: { $eq: id } } }, (err, sitemaps) => {
@@ -395,18 +394,12 @@ module.exports = (context) => {
 };
 
 module.exports.getSitemapId = (context) => {
-	return currCacheId[context];
-};
-
-module.exports.refrechSitemapId = (context) => {
 	const d = Q.defer();
 
 	cacheController.get(getSitemapCacheKey(context), VALID_EXPIRE_TIME, (err, key) => {
 		if (err || !key) {
 			return d.reject(err || "key not found");
 		}
-
-		currCacheId[context] = key;
 
 		return d.resolve(key);
 	});

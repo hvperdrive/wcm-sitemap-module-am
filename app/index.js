@@ -11,7 +11,6 @@ module.exports = (app, hooks, moduleInfo) => {
 	variablesHelper.reload(moduleInfo)
 		.then(() => {
 			cron.init();
-			cron.start();
 		});
 
 	// Setup routes
