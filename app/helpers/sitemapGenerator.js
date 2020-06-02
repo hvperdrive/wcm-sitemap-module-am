@@ -15,7 +15,10 @@ const defaultReturnFields = {
 	"meta.lastModified": 1,
 	"meta.created": 1,
 	"meta.slug": 1,
-	"fields.participation": 1
+	"fields.participation": 1,
+	"fields.studies": 1,
+	"fields.documents": 1,
+	"fields.featuredMedia": 1
 };
 const defaultContentQuery = {
 	"meta.published": true,
@@ -117,7 +120,7 @@ const getContentBySlugAndMapIt = (slug, suffixes, context) => {
 		const queryString = `meta.slug.${lang}`;
 
 		return getContentBySlug(queryString, slug).then(item => suffixes.map(suffix => {
-			let baseURL = '';
+			let baseURL = "";
 
 			if (suffix.length) {
 				baseURL += `${suffix}`;
@@ -181,6 +184,16 @@ const generateMainPagesInfoDGV = (context) => {
 	)(result));
 };
 
+const generateSubContentSlug = (items, slug, lang, context) => {
+	return items.map(item => {
+		const subSlugByLang = R.pathOr(null, ["meta", "slug", lang])(item);
+
+		if (subSlugByLang) {
+			return generateContentMap(item, (`${slug}/${subSlugByLang}`), context);
+		}
+	});
+};
+
 const getSubContentAndMapIt = (items, project, prefix, suffix, context) => {
 	const uuids = items.map(item => item.value);
 
@@ -189,13 +202,9 @@ const getSubContentAndMapIt = (items, project, prefix, suffix, context) => {
 			const slugByLang = R.pathOr(null, ["meta", "slug", lang])(project);
 
 			if (slugByLang) {
-				return items.map(item => {
-					const subSlugByLang = R.pathOr(null, ["meta", "slug", lang])(item);
-
-					if (subSlugByLang) {
-						return generateContentMap(item, (`${prefix}/${slugByLang}/${suffix}/${subSlugByLang}`), context);
-					}
-				});
+				return generateSubContentSlug(items, `${prefix}/${slugByLang}/${suffix}`, lang, context);
+			} else {
+				return generateSubContentSlug(items, `${prefix}/${suffix}`, lang, context);
 			}
 		});
 
@@ -240,15 +249,40 @@ const generateRingparkenPages = (variables, context) => getContentByCT([variable
 		return Q.all(promises.concat(ringparkRoutes));
 	}).then(result => R.flatten(result));
 
-const generateStudiesPages = (variables, context) => getContentByCT([variables.studies])
+const generateAboutSectionsDGV = (context) => getContentBySlug("meta.slug.nl", "over-ons-dgv")
 	.then((content) => {
-		const studiesRoutes = R.flatten(content.map(studie => {
-			console.log("studie", studie)
-			return generateContentMap(studie, "over-ons/studies", context);
-		}));
 
-		return Q.all(studiesRoutes);
-	})
+		const array = [
+			{ key: "participation", prefix: "over-ons", item: content, suffix: "doe-mee" },
+			{ key: "studies", prefix: "over-ons", item: content, suffix: "studies" },
+			{ key: "featuredMedia", prefix: "over-ons", item: content, suffix: "media" }
+		];
+
+		const promises = array.map((config) => {
+			const uuids = (R.path(["fields", config.key])(content));
+
+			return getSubContentAndMapIt(uuids, null, config.prefix, config.suffix, context);
+		});
+
+		return Q.all(promises);
+	}).then(result => R.flatten(result));
+
+const generateJobsSections = (context) => getContentBySlug("meta.slug.nl", "kansen-voor-jobs")
+	.then((content) => {
+
+		const array = [
+			{ key: "participation", prefix: "kansen-voor-jobs", item: content, suffix: "doe-mee" },
+			{ key: "featuredMedia", prefix: "kansen-voor-jobs", item: content, suffix: "media" }
+		];
+
+		const promises = array.map((config) => {
+			const uuids = (R.path(["fields", config.key])(content));
+
+			return getSubContentAndMapIt(uuids, null, config.prefix, config.suffix, context);
+		});
+
+		return Q.all(promises);
+	}).then(result => R.flatten(result));
 
 const generateAboutSections = (variables, context) => getContentAndMapIt(
 	[variables.about],
@@ -291,9 +325,10 @@ const generateDGVContent = (variables, context) => {
 		generateMainPagesInfoDGV(context),
 		generateProjectPages(variables, context),
 		generateRingparkenPages(variables, context),
-		generateStudiesPages(variables, context)
-	]
-}
+		generateAboutSectionsDGV(context),
+		generateJobsSections(context)
+	];
+};
 
 const generateAMContent = (variables, context) => {
 	return [
@@ -301,9 +336,9 @@ const generateAMContent = (variables, context) => {
 		generateMainPagesInfoAM(context),
 		generateProjectPages(variables, context),
 		generateVisionPages(variables, context),
-		generateAboutSections(variables, context),
-	]
-}
+		generateAboutSections(variables, context)
+	];
+};
 
 module.exports = (context) => {
 	const variables = variablesHelper.get().ctIds.variables;
