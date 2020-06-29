@@ -1,6 +1,6 @@
-# wcm-boilerplate-module
+# @wcm/sitemap-module-am
 
-[Description]
+This module automatically generates a sitemap (using cron).
 
 ## Prerequisites
  - A running implementation of the Pelorus CMS in multitenancy mode is needed either locally or on a server.
@@ -16,16 +16,12 @@
 ## Usage
 
 ### API
-You can find the API reference in the swagger/output folder as a swagger definition.
-You can beautify the output by copying the content into a swagger editor (eg. http://editor.swagger.io/#/).
 
-### Implementation
-
-### Important notes
+[GET] `/sitemap` - Get generated sitemap
 
 ## Module development
 
 Please read the following on how to work with WCM modules before changing anything to this repo.
 
 [Modules manual on Github](https://github.com/hvperdrive/pelorus-cms/blob/develop/readmes/modules.md) <br>
-[Modules manual on Digipolis Bitbucket](https://bitbucket.antwerpen.be/projects/WCM/repos/wcm/browse/readmes/modules.md)
+[Modules manual on Digipolis Bitbucket](https://bitbucket.antwerpen.be/projects/WCM/repos/wcm/browse/readmes/modules.md?at=refs%2Fheads%2Fv3-master)

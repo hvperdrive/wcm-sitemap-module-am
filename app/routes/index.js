@@ -7,7 +7,7 @@ const glob = require("glob");
 module.exports = (app, info) => {
 	// Load all routes
 	const routes = glob(path.join("./", info.location, "/app/routes/**/*.js"), {
-		sync: true,
+		sync: true
 	});
 
 	// Require each route
