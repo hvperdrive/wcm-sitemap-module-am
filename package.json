@@ -1,6 +1,6 @@
 {
   "name": "@wcm/sitemap-module-am",
-  "version": "0.2.32",
+  "version": "0.3.0",
   "description": "Sitemap generator for Antwerpen Morgen",
   "main": "app",
   "scripts": {
