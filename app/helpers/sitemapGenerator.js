@@ -28,11 +28,6 @@ const DEFAULT_FREQ = "daily";
 const SITEMAP_CACHE_KEY = "sitemapKey";
 const VALID_EXPIRE_TIME = 3 * 24 * 60 * 60; // 3 days
 
-let currCacheId = {
-	dgv: null,
-	am: null
-};
-
 const getSitemapCacheKey = (context) => {
 	return `${SITEMAP_CACHE_KEY}-${context}`;
 };
@@ -86,7 +81,7 @@ const generateMultilingualContent = (item, prefix, suffix, context) => {
 		const slugByLang = R.pathOr(null, ["meta", "slug", lang])(item);
 
 		if (slugByLang) {
-			let baseURL = `${prefix}/${slugByLang}`;
+			let baseURL = `${lang}/${prefix}/${slugByLang}`;
 
 			if (suffix) {
 				if (Array.isArray(suffix)) {
@@ -104,7 +99,7 @@ const generateMultilingualContent = (item, prefix, suffix, context) => {
 };
 
 const generateMultilingualCustomContent = (slug, date, changeFreq, context) => availableLanguages.map(lang => {
-	return generateCustomMap(`${slug}`, date, changeFreq, context);
+	return generateCustomMap(`${lang}/${slug}`, date, changeFreq, context);
 });
 
 const getContentAndMapIt = (cts, prefix, suffixes, context) => getContentByCT(cts, context)
@@ -120,10 +115,10 @@ const getContentBySlugAndMapIt = (slug, suffixes, context) => {
 		const queryString = `meta.slug.${lang}`;
 
 		return getContentBySlug(queryString, slug).then(item => suffixes.map(suffix => {
-			let baseURL = "";
+			let baseURL = lang;
 
 			if (suffix.length) {
-				baseURL += `${suffix}`;
+				baseURL += `/${suffix}`;
 			}
 
 			return generateContentMap(item, baseURL, context);
@@ -174,7 +169,7 @@ const generateMainPagesInfoDGV = (context) => {
 	promises.push(
 		...getContentBySlugAndMapIt("contactdgv", ["contact-dgv", "contact-dgv/veelgestelde-vragen", "contact-dgv/contact-formulier", "contact-dgv/infopunten"], context),
 		...getContentBySlugAndMapIt("kansen-voor-jobs", ["kansen-voor-jobs", "kansen-voor-jobs/over", "kansen-voor-jobs/tijdlijn", "kansen-voor-jobs/doe-mee", "kansen-voor-jobs/media"], context),
-		...getContentBySlugAndMapIt("over-ons-dgv", ["over-ons", "over-ons/tijdlijn", "over-ons/toekomstverbond", "over-ons/studies", "over-ons/doe-mee", "over-ons/media"], context)
+		...getContentBySlugAndMapIt("over-ons-dgv", ["over-ons", "over-ons/over-ons", "over-ons/tijdlijn", "over-ons/toekomstverbond", "over-ons/studies", "over-ons/doe-mee", "over-ons/media"], context)
 	);
 
 	return Q.allSettled(promises).then((result) => R.compose(
@@ -189,7 +184,7 @@ const generateSubContentSlug = (items, slug, lang, context) => {
 		const subSlugByLang = R.pathOr(null, ["meta", "slug", lang])(item);
 
 		if (subSlugByLang) {
-			return generateContentMap(item, (`${slug}/${subSlugByLang}`), context);
+			return generateContentMap(item, (`${lang}/${slug}/${subSlugByLang}`), context);
 		}
 	});
 };
@@ -249,40 +244,64 @@ const generateRingparkenPages = (variables, context) => getContentByCT([variable
 		return Q.all(promises.concat(ringparkRoutes));
 	}).then(result => R.flatten(result));
 
-const generateAboutSectionsDGV = (context) => getContentBySlug("meta.slug.nl", "over-ons-dgv")
-	.then((content) => {
+const generateAboutSectionsDGV = (context) => {
+	const promises = availableLanguages.map(lang => {
+		const queryString = `meta.slug.${lang}`;
 
-		const array = [
-			{ key: "participation", prefix: "over-ons", item: content, suffix: "doe-mee" },
-			{ key: "studies", prefix: "over-ons", item: content, suffix: "studies" },
-			{ key: "featuredMedia", prefix: "over-ons", item: content, suffix: "media" }
-		];
+		return getContentBySlug(queryString, "over-ons-dgv")
+			.then((content) => {
 
-		const promises = array.map((config) => {
-			const uuids = (R.path(["fields", config.key])(content));
+				const array = [
+					{ key: "participation", prefix: "over-ons", item: content, suffix: "doe-mee" },
+					{ key: "studies", prefix: "over-ons", item: content, suffix: "studies" },
+					{ key: "featuredMedia", prefix: "over-ons", item: content, suffix: "media" }
+				];
 
-			return getSubContentAndMapIt(uuids, null, config.prefix, config.suffix, context);
-		});
+				const promises = array.map((config) => {
+					const uuids = (R.path(["fields", config.key])(content));
 
-		return Q.all(promises);
-	}).then(result => R.flatten(result));
+					return getSubContentAndMapIt(uuids, null, config.prefix, config.suffix, context);
+				});
 
-const generateJobsSections = (context) => getContentBySlug("meta.slug.nl", "kansen-voor-jobs")
-	.then((content) => {
+				return Q.all(promises);
+			}).then(result => R.flatten(result));
+	});
 
-		const array = [
-			{ key: "participation", prefix: "kansen-voor-jobs", item: content, suffix: "doe-mee" },
-			{ key: "featuredMedia", prefix: "kansen-voor-jobs", item: content, suffix: "media" }
-		];
+	return Q.allSettled(promises).then((result) => R.compose(
+		R.flatten,
+		R.filter((value) => value),
+		R.map((item) => item.value)
+	)(result));
+};
 
-		const promises = array.map((config) => {
-			const uuids = (R.path(["fields", config.key])(content));
+const generateJobsSections = (context) => {
+	const promises = availableLanguages.map(lang => {
+		const queryString = `meta.slug.${lang}`;
 
-			return getSubContentAndMapIt(uuids, null, config.prefix, config.suffix, context);
-		});
+		return getContentBySlug(queryString, "kansen-voor-jobs")
+			.then((content) => {
 
-		return Q.all(promises);
-	}).then(result => R.flatten(result));
+				const array = [
+					{ key: "participation", prefix: "kansen-voor-jobs", item: content, suffix: "doe-mee" },
+					{ key: "featuredMedia", prefix: "kansen-voor-jobs", item: content, suffix: "media" }
+				];
+
+				const promises = array.map((config) => {
+					const uuids = (R.path(["fields", config.key])(content));
+
+					return getSubContentAndMapIt(uuids, null, config.prefix, config.suffix, context);
+				});
+
+				return Q.all(promises);
+			}).then(result => R.flatten(result));
+	});
+
+	return Q.allSettled(promises).then((result) => R.compose(
+		R.flatten,
+		R.filter((value) => value),
+		R.map((item) => item.value)
+	)(result));
+};
 
 const generateAboutSections = (variables, context) => getContentAndMapIt(
 	[variables.about],
