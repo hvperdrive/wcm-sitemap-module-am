@@ -40,7 +40,9 @@ const getLastMod = (content) => R.compose(
 const generateCustomMap = (location, lastmod, changefreq, context) => {
 	let baseUrl = context === "am" ? variablesHelper.get().baseAmURL : variablesHelper.get().baseDgvURL;
 
-	return { location: baseUrl + location, lastmod, changefreq };
+	const location = baseUrl + location
+
+	return { location: location.replace(/\/$/, ""), lastmod, changefreq };
 };
 
 const generateContentMap = (content, location, context) => generateCustomMap(location, getLastMod(content), DEFAULT_FREQ, context);
