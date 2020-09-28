@@ -40,7 +40,9 @@ const getLastMod = (content) => R.compose(
 const generateCustomMap = (location, lastmod, changefreq, context) => {
 	let baseUrl = context === "am" ? variablesHelper.get().baseAmURL : variablesHelper.get().baseDgvURL;
 
-	return { location: baseUrl + location, lastmod, changefreq };
+	const finalUrl = baseUrl + location
+
+	return { location: finalUrl.replace(/\/$/, ""), lastmod, changefreq };
 };
 
 const generateContentMap = (content, location, context) => generateCustomMap(location, getLastMod(content), DEFAULT_FREQ, context);
@@ -125,6 +127,10 @@ const getContentBySlugAndMapIt = (slug, suffixes, context) => {
 		}));
 	});
 };
+
+const generateRootPagesInfo = (context) => {
+	return generateCustomMap("", new Date().toISOString(), DEFAULT_FREQ, context)
+}
 
 const generateMainPagesInfo = (context) => {
 	const map = [];
@@ -340,6 +346,7 @@ const generateXMLSitemap = (sitemapArray) => {
 
 const generateDGVContent = (variables, context) => {
 	return [
+		generateRootPagesInfo(context),
 		generateMainPagesInfo(context),
 		generateMainPagesInfoDGV(context),
 		generateProjectPages(variables, context),
@@ -351,6 +358,7 @@ const generateDGVContent = (variables, context) => {
 
 const generateAMContent = (variables, context) => {
 	return [
+		generateRootPagesInfo(context),
 		generateMainPagesInfo(context),
 		generateMainPagesInfoAM(context),
 		generateProjectPages(variables, context),
