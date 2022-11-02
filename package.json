@@ -107,7 +107,7 @@
     "@district01/eslint-config": "1.0.0",
     "apidoc-swagger": "git+https://github.com/JvJefke/apidoc-swagger.git",
     "chai": "~4.1.2",
-    "gulp": "~3.9.1",
+    "gulp": "~4.0.2",
     "gulp-angular-templatecache": "~2.0.0",
     "gulp-apidoc": "~0.2.0",
     "gulp-apidoc-swagger": "~0.2.2",
