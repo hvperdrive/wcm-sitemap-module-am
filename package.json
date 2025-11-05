@@ -102,6 +102,62 @@
             "value": "",
             "type": "text",
             "required": true
+          },
+          {
+            "label": "About archeologie CT _id",
+            "description": "",
+            "key": "archeologie",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "About beleidsplan CT _id",
+            "description": "",
+            "key": "beleidsplan",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "About campagne CT _id",
+            "description": "",
+            "key": "campagne",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "About locatie CT _id",
+            "description": "",
+            "key": "locatie",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "About publicaties CT _id",
+            "description": "",
+            "key": "locatie",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "About restauratieproject CT _id",
+            "description": "",
+            "key": "locatie",
+            "value": "",
+            "type": "text",
+            "required": true
+          },
+          {
+            "label": "About stadsbouwmeester CT _id",
+            "description": "",
+            "key": "locatie",
+            "value": "",
+            "type": "text",
+            "required": true
           }
         ]
       }
