@@ -56,7 +56,6 @@ const getContentByCT = (cts) => {
 };
 
 const getContentByCTForWebsite = (cts, context) => {
-
 	return ContentModel.find(Object.assign(
 		{},
 		defaultContentQuery,
@@ -159,7 +158,8 @@ const generateMainPagesInfoAM = (context) => {
 
 	promises.push(
 		...getContentBySlugAndMapIt("visions-overview", ["toekomstvisies"], context),
-		...getContentBySlugAndMapIt("contact", ["over-ons"], context)
+		...getContentBySlugAndMapIt("contact", ["over-ons"], context),
+		...getContentBySlugAndMapIt("present-past-overview", ["nu-en-vroeger"], context)
 	);
 
 	return Q.allSettled(promises).then((result) => R.compose(
@@ -220,35 +220,32 @@ const getSubContentAndMapIt = (items, project, prefix, suffix, context) => {
 const generateVisionPages = (variables, context) => getContentAndMapIt(
 	[variables.topvisions, variables.visions],
 	"visies",
-	["over", "tijdlijn", "doe-mee", "media"],
+	[...defaultContentPageSuffix, 'visie'],
 	context
 );
 
-const generateProjectPages = (variables, context) => getContentByCTForWebsite([variables.projects], context)
-	.then((content) => {
-		const promises = content.map((project) => {
-			const uuids = (R.path(["fields", "participation"])(project));
-
-			return getSubContentAndMapIt(uuids, project, "projecten", "doe-mee", context);
-		});
-
-		const projectRoutes = R.flatten(content.map(project => generateMultilingualContent(project, "projecten", ["over", "tijdlijn", "doe-mee", "media"], context)));
-
-		return Q.all(promises.concat(projectRoutes));
-	}).then(result => R.flatten(result));
+const generateProjectPages = (variables, context) => getContentByCTForWebsite([variables.projects])
+	.then((content) => generateGenericRoutesPagesFromContent(content, context, "projecten", "doe-mee", ["over", "tijdlijn", "doe-mee","media"]))
 
 const generateRingparkenPages = (variables, context) => getContentByCT([variables.ringparken])
-	.then((content) => {
-		const promises = content.map((ringpark) => {
-			const uuids = (R.path(["fields", "participation"])(ringpark));
+	.then((content) => generateGenericRoutesPagesFromContent(content, context, "projecten", "doe-mee", ["over", "tijdlijn", "doe-mee","media"]))
 
-			return getSubContentAndMapIt(uuids, ringpark, "projecten", "doe-mee", context);
-		});
+const generateProjectPagesAM = (variables, context) => getContentByCTForWebsite([variables.projects])
+	.then((content) => generateGenericRoutesPagesFromContent(content, context, "projecten", "doe-mee", ["over", "tijdlijn", "doe-mee","media", "project"]));
 
-		const ringparkRoutes = R.flatten(content.map(ringpark => generateMultilingualContent(ringpark, "projecten", ["over", "tijdlijn", "doe-mee", "media"], context)));
+const generateDetailPagesAM = (contentType, context, prefix, multilingualContentSuffix) => getContentByCT(contentType)
+	.then((content) => generateGenericRoutesPagesFromContent(content, context, prefix, '', multilingualContentSuffix));
 
-		return Q.all(promises.concat(ringparkRoutes));
-	}).then(result => R.flatten(result));
+const generateGenericRoutesPagesFromContent = (content, context, prefix, subContentSuffix, multilingualContentSuffix) => {
+	const promises = content.map((contentItem) => {
+		const uuids = (R.path(["fields", "participation"])(contentItem));
+
+		return getSubContentAndMapIt(uuids, contentItem, prefix, subContentSuffix, context);
+	});
+
+	const routes = R.flatten(content.map(contentItem => generateMultilingualContent(contentItem, prefix, multilingualContentSuffix, context)));
+	return Q.all(promises.concat(routes)).then(result => R.flatten(result));
+}
 
 const generateAboutSectionsDGV = (context) => {
 	const promises = availableLanguages.map(lang => {
@@ -357,11 +354,19 @@ const generateDGVContent = (variables, context) => {
 };
 
 const generateAMContent = (variables, context) => {
+	const defaultAMSuffix = ["over", "tijdlijn", "doe-mee","media", 'activiteiten']
 	return [
 		generateRootPagesInfo(context),
 		generateMainPagesInfo(context),
 		generateMainPagesInfoAM(context),
-		generateProjectPages(variables, context),
+		generateProjectPagesAM(variables, context),
+		generateDetailPagesAM([variables.archeologie], context, 'archeologie', [...defaultAMSuffix, 'archeologie']),
+		generateDetailPagesAM([variables.beleidsplan], context, 'beleidsplan', [...defaultAMSuffix, 'beleidsplan']),
+		generateDetailPagesAM([variables.campagne], context, 'campagne', [...defaultAMSuffix, 'campagne']),
+		generateDetailPagesAM([variables.locatie], context, 'locatie', [...defaultAMSuffix, 'locatie','publicaties']),
+		generateDetailPagesAM([variables.publicaties], context, 'publicaties', ['']),
+		generateDetailPagesAM([variables.restauratieproject], context, 'restauratieproject', [...defaultAMSuffix, 'restauratieproject']),
+		generateDetailPagesAM([variables.stadsbouwmeester], context, 'stadsbouwmeester', [...defaultAMSuffix, 'stadsbouwmeester','publicaties', 'wedstrijden']),
 		generateVisionPages(variables, context),
 		generateAboutSections(variables, context)
 	];
